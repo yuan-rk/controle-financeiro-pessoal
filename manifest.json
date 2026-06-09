@@ -1,218 +1,25 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0F172A" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="YR Finanças" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="manifest" href="manifest.json?v=12" />
-  <link rel="apple-touch-icon" href="icon-192.png?v=12" />
-  <title>YR Finanças | Controle Financeiro Pessoal</title>
-  <link rel="icon" type="image/png" href="icon-192.png?v=12" />
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body>
-  <div class="app-shell">
-    <aside class="sidebar" aria-label="Menu principal">
-      <div class="brand">
-        <div class="brand-logo"><img src="icon-192.png?v=12" alt="Logo YR Finanças"></div>
-        <div>
-          <strong>YR Finanças</strong>
-          <span>controle de faturas</span>
-        </div>
-      </div>
-
-      <nav class="nav-list" id="desktopNav"></nav>
-
-      <div class="sidebar-footer">
-        <button class="ghost-button" id="seedButton" title="Recriar dados de exemplo">✨ Dados exemplo</button>
-      </div>
-    </aside>
-
-    <main class="main-content">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">Controle financeiro pessoal</p>
-          <h1 id="pageTitle">Dashboard</h1>
-        </div>
-        <div class="topbar-actions">
-          <button class="icon-button mobile-only" id="openMobileMenu" aria-label="Abrir menu">☰</button>
-          <div class="account-pill" id="accountPill" hidden></div>
-          <button class="primary-button" data-action="new-purchase">+ Nova compra</button>
-        </div>
-      </header>
-
-      <section id="toastContainer" class="toast-container" aria-live="polite"></section>
-
-      <section class="page active" id="dashboardPage">
-        <div class="filters-bar">
-          <label>Mês<select id="dashboardMonth"></select></label>
-          <label>Ano<select id="dashboardYear"></select></label>
-          <label>Forma<select id="dashboardCard"></select></label>
-          <button class="secondary-button" id="refreshDashboard">Atualizar</button>
-        </div>
-
-        <div class="metric-grid" id="dashboardMetrics"></div>
-
-        <section class="finance-overview-section" id="financeOverviewSection">
-          <div class="panel-header overview-title">
-            <div>
-              <h2>Visão geral financeira</h2>
-              <span class="muted">Acompanhe suas contas, formas de pagamento e resumo financeiro do mês.</span>
-            </div>
-          </div>
-
-          <div class="overview-grid">
-            <article class="panel overview-main-card">
-              <div class="overview-greeting">
-                <div>
-                  <h3 id="overviewGreeting">Boa tarde, Yuan! 👋</h3>
-                  <p>Aqui está um resumo da sua vida financeira.</p>
-                </div>
-                <button class="icon-button" type="button" title="Ocultar/mostrar valores">👁️</button>
-              </div>
-
-              <div class="overview-totals" id="overviewTotals"></div>
-
-              <div class="overview-list-head">
-                <h3>Minhas contas</h3>
-                <span class="muted">Saldos manuais e entradas do mês</span>
-              </div>
-              <div id="overviewAccounts" class="overview-list"></div>
-            </article>
-
-            <aside class="overview-side">
-              <article class="panel active-accounts-card">
-                <div class="panel-header compact">
-                  <h3>Contas ativas</h3>
-                  <span class="muted">manual</span>
-                </div>
-                <div id="overviewAccountChips" class="account-chip-grid"></div>
-              </article>
-
-              <article class="panel overview-cards-card">
-                <div class="panel-header compact">
-                  <h3>Meus cartões</h3>
-                  <span class="muted">faturas do mês</span>
-                </div>
-                <div id="overviewCards" class="overview-card-list"></div>
-              </article>
-            </aside>
-          </div>
-        </section>
-
-
-        <div class="dashboard-layout">
-          <article class="panel large-panel">
-            <div class="panel-header">
-              <h2>Evolução da fatura por mês</h2>
-              <span class="badge ok">dinâmico</span>
-            </div>
-            <canvas id="invoiceEvolutionChart"></canvas>
-          </article>
-          <article class="panel">
-            <div class="panel-header"><h2>Recebido × pendente</h2></div>
-            <canvas id="receivedPendingChart"></canvas>
-          </article>
-        </div>
-
-        <div class="chart-grid">
-          <article class="panel"><div class="panel-header"><h2>Gastos por categoria</h2></div><canvas id="categoryChart"></canvas></article>
-          <article class="panel"><div class="panel-header"><h2>Gastos por cartão</h2></div><canvas id="cardChart"></canvas></article>
-          <article class="panel"><div class="panel-header"><h2>Pendências por pessoa</h2></div><canvas id="peopleDebtChart"></canvas></article>
-          <article class="panel"><div class="panel-header"><h2>Minhas compras × terceiros</h2></div><canvas id="ownerCompareChart"></canvas></article>
-        </div>
-
-        <div class="info-grid">
-          <article class="panel"><div class="panel-header"><h2>Ranking de devedores</h2></div><div id="peopleRanking" class="stack-list"></div></article>
-          <article class="panel"><div class="panel-header"><h2>Formas mais usadas</h2></div><div id="cardRanking" class="stack-list"></div></article>
-          <article class="panel"><div class="panel-header"><h2>Próximas parcelas</h2></div><div id="nextInstallments" class="stack-list"></div></article>
-          <article class="panel"><div class="panel-header"><h2>Resumo por cartão</h2></div><div id="cardSummary" class="stack-list"></div></article>
-        </div>
-      </section>
-
-      <section class="page" id="newPurchasePage">
-        <article class="panel form-panel">
-          <div class="panel-header">
-            <h2>Nova compra</h2>
-            <span class="muted">As parcelas são geradas automaticamente.</span>
-          </div>
-          <form id="purchaseForm" class="smart-form"></form>
-        </article>
-      </section>
-
-      <section class="page" id="purchasesPage">
-        <div class="section-head">
-          <div><h2>Compras / Lançamentos</h2><p>Gerencie compras cadastradas e suas parcelas.</p></div>
-          <div class="account-pill" id="accountPill" hidden></div>
-          <button class="primary-button" data-action="new-purchase">+ Nova compra</button>
-        </div>
-        <div class="filters-bar wrap" id="purchaseFilters"></div>
-        <div class="table-card"><div id="purchasesTable"></div></div>
-      </section>
-
-      <section class="page" id="installmentsPage">
-        <div class="section-head"><div><h2>Parcelas</h2><p>Acompanhe status, fatura e devedores por parcela.</p></div></div>
-        <div class="filters-bar wrap" id="installmentFilters"></div>
-        <div class="table-card"><div id="installmentsTable"></div></div>
-      </section>
-
-      <section class="page" id="cardsPage">
-        <div class="section-head"><div><h2>Formas de pagamento</h2><p>Cadastre cartões, Pix, boleto, dinheiro, crediário e outras formas usadas nas compras.</p></div><button class="primary-button" id="addCardBtn">+ Forma</button></div>
-        <div id="cardsGrid" class="cards-grid"></div>
-      </section>
-
-      <section class="page" id="peoplePage">
-        <div class="section-head"><div><h2>Pessoas / Devedores</h2><p>Veja quem deve, quanto já pagou e histórico individual.</p></div><button class="primary-button" id="addPersonBtn">+ Pessoa</button></div>
-        <div class="filters-bar"><label>Mês<select id="peopleMonth"></select></label><label>Ano<select id="peopleYear"></select></label></div>
-        <div id="peopleGrid" class="cards-grid"></div>
-      </section>
-
-      <section class="page" id="paymentsPage">
-        <div class="section-head"><div><h2>Recebimentos</h2><p>Registre pagamentos recebidos de outras pessoas.</p></div><button class="primary-button" id="addPaymentBtn">+ Recebimento</button></div>
-        <div class="table-card"><div id="paymentsTable"></div></div>
-      </section>
-
-      <section class="page" id="merchantsPage">
-        <div class="section-head"><div><h2>Estabelecimentos</h2><p>Mapeie o nome real e o nome que aparece na fatura.</p></div><button class="primary-button" id="addMerchantBtn">+ Estabelecimento</button></div>
-        <div class="table-card"><div id="merchantsTable"></div></div>
-      </section>
-
-      <section class="page" id="categoriesPage">
-        <div class="section-head"><div><h2>Categorias</h2><p>Organize seus gastos por categoria.</p></div><button class="primary-button" id="addCategoryBtn">+ Categoria</button></div>
-        <div id="categoriesGrid" class="tag-grid"></div>
-      </section>
-
-      <section class="page" id="settingsPage">
-        <div class="section-head"><div><h2>Configurações</h2><p>Backup, importação, tema e gerenciamento dos dados locais.</p></div></div>
-        <div class="settings-grid">
-          <article class="panel"><h3>Tema</h3><p class="muted">Alterne entre claro e escuro.</p><button class="secondary-button" id="toggleThemeBtn">Alternar tema</button></article>
-          <article class="panel"><h3>Backup</h3><p class="muted">Exporte um arquivo JSON com todos os dados.</p><button class="primary-button" id="exportBtn">Exportar JSON</button></article>
-          <article class="panel"><h3>Restaurar</h3><p class="muted">Importe um JSON exportado anteriormente.</p><input type="file" id="importInput" accept="application/json" hidden><button class="secondary-button" id="importBtn">Importar JSON</button></article>
-          <article class="panel"><h3>Conta e nuvem</h3><p class="muted" id="cloudStatusText">Dados sincronizados com Supabase.</p><button class="secondary-button" id="syncNowBtn">Sincronizar agora</button><button class="ghost-button" id="logoutBtn" style="margin-top:10px">Sair da conta</button></article>
-          <article class="panel danger-zone"><h3>Limpar dados</h3><p class="muted">Remove todos os dados salvos neste navegador e envia a limpeza para a nuvem quando logado.</p><button class="danger-button" id="clearDataBtn">Limpar tudo</button></article>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <nav class="bottom-nav" id="mobileNav" aria-label="Menu mobile"></nav>
-  <div class="mobile-drawer" id="mobileDrawer"><div class="drawer-panel"><div class="drawer-head"><strong>Menu</strong><button class="icon-button" id="closeMobileMenu">×</button></div><nav id="drawerNav" class="nav-list"></nav></div></div>
-
-  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="modal">
-      <div class="modal-header"><h2 id="modalTitle">Modal</h2><button class="icon-button" id="closeModal">×</button></div>
-      <div id="modalBody"></div>
-    </div>
-  </div>
-
-  <template id="emptyTemplate"><div class="empty-state"><div>🗂️</div><strong>Nada encontrado</strong><span>Cadastre dados ou ajuste os filtros para visualizar informações.</span></div></template>
-
-  <script src="app.js"></script>
-</body>
-</html>
+{
+  "name": "YR Finanças",
+  "short_name": "YR Finanças",
+  "description": "Controle financeiro pessoal com cartões, parcelas e recebimentos.",
+  "start_url": "./?v=13",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0F172A",
+  "theme_color": "#0F172A",
+  "icons": [
+    {
+      "src": "icon-192.png?v=13",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png?v=13",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
