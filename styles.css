@@ -2079,3 +2079,43 @@ body.touch-layout #mobileNav .nav-btn span:not(.nav-icon){
     grid-template-columns:1fr!important;
   }
 }
+
+
+
+/* v21: modo login isolado, sem dashboard fantasma */
+body.auth-mode{
+  overflow:hidden!important;
+  background:
+    radial-gradient(circle at 20% 8%, rgba(99,102,241,.22), transparent 34%),
+    #0b1120!important;
+}
+body.auth-mode .app-shell,
+body.auth-mode #appShell,
+body.auth-mode .mobile-nav,
+body.auth-mode #mobileNav,
+body.auth-mode .sidebar,
+body.auth-mode aside.sidebar{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+body.auth-mode .auth-gate{
+  position:fixed!important;
+  inset:0!important;
+  z-index:10000!important;
+  min-height:100dvh!important;
+  width:100vw!important;
+  display:grid!important;
+  place-items:center!important;
+  padding:22px!important;
+  overflow:auto!important;
+}
+body.auth-mode .auth-card{
+  margin:auto!important;
+}
+.auth-gate{
+  position:fixed;
+  inset:0;
+  z-index:10000;
+}
