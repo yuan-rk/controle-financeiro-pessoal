@@ -1,8 +1,10 @@
-/* FinCard Pro - sistema local de controle de faturas
-   Tudo é salvo no LocalStorage do navegador. Para produção multi-dispositivo,
-   o próximo passo é trocar a camada de storage por um backend/API. */
+/* FinCard Pro - controle de faturas com sincronização opcional em nuvem.
+   O sistema usa Supabase para login e banco online. O LocalStorage continua
+   como cache/backup local para melhorar a experiência e facilitar migração. */
 (() => {
   const STORAGE_KEY = 'fincard-pro-data-v1';
+  const SUPABASE_URL = 'https://xmhypvgggtelgwcbklen.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable__dpSFfjN3AoKThHeE4Xf3A_uUz-ywx5';
   const today = new Date();
   const currentMonth = today.getMonth() + 1;
   const currentYear = today.getFullYear();
@@ -22,7 +24,12 @@
       installments: { month: String(currentMonth), year: String(currentYear), cardId: 'all', personId: 'all', status: 'all' },
       people: { month: currentMonth, year: currentYear }
     },
-    data: null
+    data: null,
+    supabase: null,
+    user: null,
+    cloudRecordId: null,
+    syncTimer: null,
+    isCloudReady: false
   };
 
   const $ = (selector) => document.querySelector(selector);
@@ -54,16 +61,101 @@
     return state.data;
   }
 
-  function loadFromStorage() {
+  function applyTheme() {
+    document.documentElement.classList.toggle('light', state.data?.settings?.theme === 'light');
+  }
+
+  function setupSupabase() {
+    if (!window.supabase) return null;
+    state.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    state.isCloudReady = true;
+    return state.supabase;
+  }
+
+  function loadLocalDataOrDefault() {
     const raw = localStorage.getItem(STORAGE_KEY);
     state.data = raw ? JSON.parse(raw) : defaultData();
-    if (!raw) saveToStorage(false);
-    document.documentElement.classList.toggle('light', state.data.settings.theme === 'light');
+    if (!state.data.settings) state.data.settings = { theme: 'dark' };
+    applyTheme();
+    return { data: state.data, hadLocalData: Boolean(raw) };
+  }
+
+  async function loadFromCloud() {
+    if (!state.supabase || !state.user) {
+      loadLocalDataOrDefault();
+      return;
+    }
+
+    const { data: record, error } = await state.supabase
+      .from('finance_data')
+      .select('id,data,updated_at')
+      .eq('user_id', state.user.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error(error);
+      loadLocalDataOrDefault();
+      toast('Não consegui carregar a nuvem. Usei o backup local deste navegador.', 'error');
+      return;
+    }
+
+    if (record?.data) {
+      state.cloudRecordId = record.id;
+      state.data = record.data;
+      if (!state.data.settings) state.data.settings = { theme: 'dark' };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+      applyTheme();
+      return;
+    }
+
+    // Primeiro login: migra os dados locais deste navegador para a nuvem.
+    loadLocalDataOrDefault();
+    await saveToSupabase(false, true);
   }
 
   function saveToStorage(show = true) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+    if (state.user) scheduleCloudSync(show);
     if (show) toast('Dados salvos com sucesso.', 'success');
+  }
+
+  function scheduleCloudSync(show = false) {
+    clearTimeout(state.syncTimer);
+    state.syncTimer = setTimeout(() => saveToSupabase(show), 700);
+  }
+
+  async function saveToSupabase(show = false, immediate = false) {
+    if (!state.supabase || !state.user || !state.data) return;
+    const payload = {
+      user_id: state.user.id,
+      data: state.data,
+      updated_at: new Date().toISOString()
+    };
+
+    let result;
+    if (state.cloudRecordId) {
+      result = await state.supabase
+        .from('finance_data')
+        .update(payload)
+        .eq('id', state.cloudRecordId)
+        .select('id')
+        .single();
+    } else {
+      result = await state.supabase
+        .from('finance_data')
+        .insert(payload)
+        .select('id')
+        .single();
+    }
+
+    if (result.error) {
+      console.error(result.error);
+      toast('Não consegui sincronizar com a nuvem. O backup local foi mantido.', 'error');
+      return;
+    }
+    state.cloudRecordId = result.data.id;
+    updateAccountPill();
+    if (show || immediate) toast('Sincronizado com a nuvem.', 'success');
   }
 
   function getActiveCards() { return state.data.cards.filter(card => card.status === 'Ativo'); }
@@ -399,6 +491,88 @@
 
   function toast(message, type = 'success') { const el = document.createElement('div'); el.className = `toast ${type}`; el.textContent = message; $('#toastContainer').appendChild(el); setTimeout(()=>el.remove(), 3200); }
 
+
+  function setAppVisible(visible) {
+    $('.app-shell').style.display = visible ? '' : 'none';
+    $('#mobileNav').style.display = visible ? '' : 'none';
+  }
+
+  function updateAccountPill() {
+    const pill = $('#accountPill');
+    if (!pill) return;
+    if (!state.user) { pill.hidden = true; return; }
+    pill.hidden = false;
+    pill.textContent = `☁️ ${state.user.email || 'Conta conectada'}`;
+    const cloudText = $('#cloudStatusText');
+    if (cloudText) cloudText.textContent = `Conectado como ${state.user.email}. Os dados são salvos localmente e sincronizados com o Supabase.`;
+  }
+
+  function ensureAuthGate() {
+    let gate = $('#authGate');
+    if (gate) return gate;
+    gate = document.createElement('section');
+    gate.id = 'authGate';
+    gate.className = 'auth-gate';
+    gate.innerHTML = `
+      <div class="auth-card">
+        <div class="brand auth-brand"><div class="brand-logo">F</div><div><strong>FinCard Pro</strong><span>sincronização em nuvem</span></div></div>
+        <h1>Entre para sincronizar seus dados</h1>
+        <p>Use o mesmo e-mail e senha no celular e no computador para acessar os mesmos cartões, compras, parcelas e recebimentos.</p>
+        <form id="authForm" class="auth-form">
+          <label>E-mail<input name="email" type="email" autocomplete="email" required placeholder="seu@email.com"></label>
+          <label>Senha<input name="password" type="password" autocomplete="current-password" required minlength="6" placeholder="mínimo 6 caracteres"></label>
+          <div class="auth-actions">
+            <button class="primary-button" type="submit" data-auth="login">Entrar</button>
+            <button class="secondary-button" type="button" id="signupBtn">Criar conta</button>
+          </div>
+        </form>
+        <small>Ao entrar pela primeira vez neste navegador, os dados locais existentes serão enviados para a sua conta na nuvem.</small>
+      </div>`;
+    document.body.appendChild(gate);
+    return gate;
+  }
+
+  async function handleAuth(mode) {
+    const form = $('#authForm');
+    const email = form.elements.email.value.trim();
+    const password = form.elements.password.value;
+    if (!email || !password) return;
+    const action = mode === 'signup'
+      ? state.supabase.auth.signUp({ email, password })
+      : state.supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await action;
+    if (error) { toast(error.message, 'error'); return; }
+    state.user = data.user || data.session?.user || null;
+    if (!state.user) {
+      toast('Conta criada. Se a confirmação de e-mail estiver ligada no Supabase, confirme o e-mail antes de entrar.', 'success');
+      return;
+    }
+    $('#authGate')?.remove();
+    setAppVisible(true);
+    await loadFromCloud();
+    updateAccountPill();
+    renderPurchaseForm();
+    renderAll();
+    toast(mode === 'signup' ? 'Conta criada e conectada.' : 'Login realizado.', 'success');
+  }
+
+  function showAuthGate() {
+    setAppVisible(false);
+    const gate = ensureAuthGate();
+    gate.querySelector('#authForm').onsubmit = (e) => { e.preventDefault(); handleAuth('login'); };
+    gate.querySelector('#signupBtn').onclick = () => handleAuth('signup');
+  }
+
+  async function signOut() {
+    if (!state.supabase) return;
+    await saveToSupabase(false);
+    await state.supabase.auth.signOut();
+    state.user = null;
+    state.cloudRecordId = null;
+    updateAccountPill();
+    showAuthGate();
+  }
+
   function bindEvents() {
     $('#dashboardMonth').onchange = e => { state.filters.dashboard.month = Number(e.target.value); renderDashboard(); };
     $('#dashboardYear').onchange = e => { state.filters.dashboard.year = Number(e.target.value); renderDashboard(); };
@@ -411,7 +585,8 @@
     $('#closeModal').onclick = closeModal; $('#modalBackdrop').onclick = e => { if (e.target.id === 'modalBackdrop') closeModal(); };
     $('#toggleThemeBtn').onclick = () => { state.data.settings.theme = state.data.settings.theme === 'dark' ? 'light' : 'dark'; document.documentElement.classList.toggle('light', state.data.settings.theme === 'light'); saveToStorage(); renderDashboard(); };
     $('#exportBtn').onclick = exportData; $('#importBtn').onclick = () => $('#importInput').click(); $('#importInput').onchange = e => e.target.files[0] && importData(e.target.files[0]);
-    $('#clearDataBtn').onclick = () => { if (confirm('Isso apagará todos os dados locais. Deseja continuar?')) { localStorage.removeItem(STORAGE_KEY); state.data = { cards:[],people:[],categories:[],merchants:[],purchases:[],installments:[],payments:[],settings:{theme:'dark'} }; saveToStorage(false); renderAll(); toast('Todos os dados foram limpos.'); } };
+    $('#syncNowBtn').onclick = () => saveToSupabase(true, true); $('#logoutBtn').onclick = signOut;
+    $('#clearDataBtn').onclick = () => { if (confirm('Isso apagará todos os dados deste navegador e da sua conta na nuvem. Deseja continuar?')) { localStorage.removeItem(STORAGE_KEY); state.data = { cards:[],people:[],categories:[],merchants:[],purchases:[],installments:[],payments:[],settings:{theme:'dark'} }; saveToStorage(false); renderAll(); toast('Todos os dados foram limpos.'); } };
     $('#seedButton').onclick = () => { if (confirm('Substituir dados atuais por dados de exemplo?')) { state.data = defaultData(); saveToStorage(); renderAll(); } };
     $('#openMobileMenu').onclick = () => $('#mobileDrawer').classList.add('show'); $('#closeMobileMenu').onclick = () => $('#mobileDrawer').classList.remove('show');
   }
@@ -424,6 +599,45 @@
     openCardModal, openPersonModal, openCategoryModal, openMerchantModal, openPaymentModal, deleteItem
   };
 
-  function init() { loadFromStorage(); renderNav(); bindEvents(); renderPurchaseForm(); renderAll(); }
+  async function init() {
+    renderNav();
+    bindEvents();
+    setupSupabase();
+
+    if (!state.supabase) {
+      loadLocalDataOrDefault();
+      renderPurchaseForm();
+      renderAll();
+      toast('Supabase não carregou. Usando apenas dados locais.', 'error');
+      return;
+    }
+
+    const { data } = await state.supabase.auth.getSession();
+    state.user = data.session?.user || null;
+
+    state.supabase.auth.onAuthStateChange(async (_event, session) => {
+      const nextUser = session?.user || null;
+      if (nextUser?.id === state.user?.id) return;
+      state.user = nextUser;
+      if (state.user) {
+        $('#authGate')?.remove();
+        setAppVisible(true);
+        await loadFromCloud();
+        updateAccountPill();
+        renderPurchaseForm();
+        renderAll();
+      }
+    });
+
+    if (!state.user) {
+      showAuthGate();
+      return;
+    }
+
+    await loadFromCloud();
+    updateAccountPill();
+    renderPurchaseForm();
+    renderAll();
+  }
   init();
 })();

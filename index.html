@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -34,6 +35,7 @@
         </div>
         <div class="topbar-actions">
           <button class="icon-button mobile-only" id="openMobileMenu" aria-label="Abrir menu">☰</button>
+          <div class="account-pill" id="accountPill" hidden></div>
           <button class="primary-button" data-action="new-purchase">+ Nova compra</button>
         </div>
       </header>
@@ -92,6 +94,7 @@
       <section class="page" id="purchasesPage">
         <div class="section-head">
           <div><h2>Compras / Lançamentos</h2><p>Gerencie compras cadastradas e suas parcelas.</p></div>
+          <div class="account-pill" id="accountPill" hidden></div>
           <button class="primary-button" data-action="new-purchase">+ Nova compra</button>
         </div>
         <div class="filters-bar wrap" id="purchaseFilters"></div>
@@ -136,7 +139,8 @@
           <article class="panel"><h3>Tema</h3><p class="muted">Alterne entre claro e escuro.</p><button class="secondary-button" id="toggleThemeBtn">Alternar tema</button></article>
           <article class="panel"><h3>Backup</h3><p class="muted">Exporte um arquivo JSON com todos os dados.</p><button class="primary-button" id="exportBtn">Exportar JSON</button></article>
           <article class="panel"><h3>Restaurar</h3><p class="muted">Importe um JSON exportado anteriormente.</p><input type="file" id="importInput" accept="application/json" hidden><button class="secondary-button" id="importBtn">Importar JSON</button></article>
-          <article class="panel danger-zone"><h3>Limpar dados</h3><p class="muted">Remove todos os dados salvos no navegador.</p><button class="danger-button" id="clearDataBtn">Limpar tudo</button></article>
+          <article class="panel"><h3>Conta e nuvem</h3><p class="muted" id="cloudStatusText">Dados sincronizados com Supabase.</p><button class="secondary-button" id="syncNowBtn">Sincronizar agora</button><button class="ghost-button" id="logoutBtn" style="margin-top:10px">Sair da conta</button></article>
+          <article class="panel danger-zone"><h3>Limpar dados</h3><p class="muted">Remove todos os dados salvos neste navegador e envia a limpeza para a nuvem quando logado.</p><button class="danger-button" id="clearDataBtn">Limpar tudo</button></article>
         </div>
       </section>
     </main>
