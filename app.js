@@ -11,7 +11,7 @@
 
   const menu = [
     ['dashboard', '📊', 'Dashboard'], ['newPurchase', '➕', 'Nova compra'], ['purchases', '🧾', 'Compras'],
-    ['installments', '📆', 'Parcelas'], ['cards', '💳', 'Cartões'], ['people', '👥', 'Pessoas'],
+    ['installments', '📆', 'Parcelas'], ['cards', '💳', 'Formas de pagamento'], ['people', '👥', 'Pessoas'],
     ['payments', '💸', 'Recebimentos'], ['merchants', '🏪', 'Estabelecimentos'], ['categories', '🏷️', 'Categorias'], ['settings', '⚙️', 'Configurações']
   ];
 
@@ -46,7 +46,15 @@
       { id: uid('card'), name: 'Nubank Platinum', bank: 'Nubank', nickname: 'Roxinho', last4: '1234', brand: 'Mastercard', type: 'Crédito', closeDay: 3, dueDay: 10, bestDay: 4, limit: 4500, color: '#6366F1', status: 'Ativo', notes: 'Cartão principal' },
       { id: uid('card'), name: 'Inter Gold', bank: 'Banco Inter', nickname: 'Inter', last4: '9876', brand: 'Visa', type: 'Crédito e Débito', closeDay: 15, dueDay: 22, bestDay: 16, limit: 3000, color: '#F59E0B', status: 'Ativo', notes: '' }
     ];
-    const categories = ['Alimentação','Transporte','Igreja','Estudos','Faculdade','Casa','Compras','Saúde','Lazer','Assinaturas','Viagem','Presente','Outros'].map(name => ({ id: uid('cat'), name, color: '#6366F1' }));
+    const defaultCategories = [
+      'Alimentação', 'Mercado', 'Restaurante / Lanche', 'Transporte', 'Combustível',
+      'Igreja', 'Dízimos / Ofertas', 'Estudos', 'Faculdade', 'Cursos',
+      'Casa', 'Contas da casa', 'Compras', 'Roupas', 'Saúde',
+      'Farmácia', 'Lazer', 'Assinaturas', 'Viagem', 'Presente',
+      'Beleza / Cuidados', 'Pets', 'Serviços', 'Impostos / Taxas',
+      'Emergência', 'Outros'
+    ];
+    const categories = defaultCategories.map((name, i) => ({ id: uid('cat'), name, color: '#6366F1' }));
     const people = ['Ana','Lucas','Pedro'].map(name => ({ id: uid('person'), name, phone: '', notes: '' }));
     const merchants = [
       { id: uid('merchant'), realName: 'Edu Pizzas', invoiceName: 'Lojas e Produtos da Terra', categoryId: categories[0].id, notes: 'Nome da maquininha diferente' },
@@ -65,6 +73,53 @@
     document.documentElement.classList.toggle('light', state.data?.settings?.theme === 'light');
   }
 
+  function ensureDefaultCategories() {
+    if (!state.data) return;
+    if (!Array.isArray(state.data.categories)) state.data.categories = [];
+    const required = [
+      'Alimentação', 'Mercado', 'Restaurante / Lanche', 'Transporte', 'Combustível',
+      'Igreja', 'Dízimos / Ofertas', 'Estudos', 'Faculdade', 'Cursos',
+      'Casa', 'Contas da casa', 'Compras', 'Roupas', 'Saúde',
+      'Farmácia', 'Lazer', 'Assinaturas', 'Viagem', 'Presente',
+      'Beleza / Cuidados', 'Pets', 'Serviços', 'Impostos / Taxas',
+      'Emergência', 'Outros'
+    ];
+    const existing = new Set(state.data.categories.map(c => String(c.name || '').trim().toLowerCase()));
+    required.forEach(name => {
+      if (!existing.has(name.toLowerCase())) {
+        state.data.categories.push({ id: uid('cat'), name, color: '#6366F1' });
+      }
+    });
+  }
+
+  function paymentNeedsCard(method) {
+    return ['Cartão de crédito', 'Cartão de débito'].includes(method);
+  }
+
+  function paymentAllowsInstallments(method) {
+    return ['Cartão de crédito', 'Crediário'].includes(method);
+  }
+
+  function paymentName(item) {
+    const method = item?.paymentMethod || (item?.cardId ? 'Cartão de crédito' : 'Não informado');
+    if (item?.cardId) return `${method} • ${cardName(item.cardId)}`;
+    return method;
+  }
+
+  function paymentFilterOptions(includeAll = false) {
+    const methods = ['Pix', 'Dinheiro', 'Boleto', 'Crediário', 'Transferência', 'Outro'];
+    const cards = state.data.cards.map(c => `<option value="card:${c.id}">${escapeHTML(c.nickname || c.name)} ${c.last4 ? '••' + c.last4 : ''}</option>`).join('');
+    const methodOptions = methods.map(m => `<option value="method:${m}">${m}</option>`).join('');
+    return `${includeAll ? '<option value="all">Todas as formas</option>' : ''}${cards}${methodOptions}`;
+  }
+
+  function matchesPaymentFilter(item, filter) {
+    if (!filter || filter === 'all') return true;
+    if (filter.startsWith('card:')) return item.cardId === filter.slice(5);
+    if (filter.startsWith('method:')) return (item.paymentMethod || 'Cartão de crédito') === filter.slice(7);
+    return item.cardId === filter; // compatibilidade com backups antigos
+  }
+
   function setupSupabase() {
     if (!window.supabase) return null;
     state.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
@@ -76,6 +131,7 @@
     const raw = localStorage.getItem(STORAGE_KEY);
     state.data = raw ? JSON.parse(raw) : defaultData();
     if (!state.data.settings) state.data.settings = { theme: 'dark' };
+    ensureDefaultCategories();
     applyTheme();
     return { data: state.data, hadLocalData: Boolean(raw) };
   }
@@ -103,6 +159,7 @@
       state.cloudRecordId = record.id;
       state.data = record.data;
       if (!state.data.settings) state.data.settings = { theme: 'dark' };
+      ensureDefaultCategories();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
       applyTheme();
       return;
@@ -184,7 +241,7 @@
         id: uid('inst'), purchaseId: purchase.id, purchaseDate: purchase.date,
         month: ref.getMonth() + 1, year: ref.getFullYear(), description: purchase.description,
         merchantReal: purchase.merchantReal, invoiceName: purchase.invoiceName, number: index + 1,
-        totalInstallments: count, label: `${index + 1}/${count}`, amount: value, cardId: purchase.cardId,
+        totalInstallments: count, label: `${index + 1}/${count}`, amount: value, paymentMethod: purchase.paymentMethod || 'Cartão de crédito', cardId: purchase.cardId || '',
         categoryId: purchase.categoryId, type: purchase.type, personId: purchase.personId, status: purchase.status,
         myAmount: +(value * myRatio).toFixed(2), otherAmount: +(value * otherRatio).toFixed(2)
       };
@@ -193,15 +250,41 @@
 
   function savePurchase(payload, persist = true) {
     const total = money(payload.total);
-    const count = Math.max(1, Number(payload.installmentsCount || 1));
+    const paymentMethod = payload.paymentMethod || 'Cartão de crédito';
+    const canInstall = paymentAllowsInstallments(paymentMethod);
+    const needsCard = paymentNeedsCard(paymentMethod);
+    const count = canInstall ? Math.max(1, Number(payload.installmentsCount || 1)) : 1;
     const type = payload.type;
     let myShare = money(payload.myShare);
     let otherShare = money(payload.otherShare);
+
+    if (!canInstall) payload.installmentsCount = 1;
+    if (!needsCard) payload.cardId = '';
+
     if (type === 'Minha') { myShare = total; otherShare = 0; payload.personId = ''; }
     if (type === 'De outra pessoa') { myShare = 0; otherShare = total; }
     if (type === 'Dividida' && Math.abs((myShare + otherShare) - total) > 0.01) throw new Error('Na compra dividida, sua parte + parte da outra pessoa deve ser igual ao total.');
 
-    const purchase = { id: payload.id || uid('purchase'), date: payload.date, description: payload.description.trim(), merchantReal: payload.merchantReal.trim(), invoiceName: payload.invoiceName.trim(), total, installmentsCount: count, installmentValue: +(total / count).toFixed(2), cardId: payload.cardId, categoryId: payload.categoryId, type, personId: payload.personId || '', myShare, otherShare, notes: payload.notes || '', status: payload.status || 'Pendente', createdAt: new Date().toISOString() };
+    const purchase = {
+      id: payload.id || uid('purchase'),
+      date: payload.date,
+      description: payload.description.trim(),
+      merchantReal: payload.merchantReal.trim(),
+      invoiceName: payload.invoiceName.trim(),
+      total,
+      paymentMethod,
+      installmentsCount: count,
+      installmentValue: +(total / count).toFixed(2),
+      cardId: payload.cardId || '',
+      categoryId: payload.categoryId,
+      type,
+      personId: payload.personId || '',
+      myShare,
+      otherShare,
+      notes: payload.notes || '',
+      status: payload.status || 'Pendente',
+      createdAt: new Date().toISOString()
+    };
 
     state.data.purchases = state.data.purchases.filter(p => p.id !== purchase.id);
     state.data.installments = state.data.installments.filter(i => i.purchaseId !== purchase.id);
@@ -238,7 +321,7 @@
   function calculateDashboardTotals() {
     const { month, year, cardId } = state.filters.dashboard;
     let installments = filterByMonthYear(state.data.installments, month, year);
-    if (cardId !== 'all') installments = installments.filter(i => i.cardId === cardId);
+    if (cardId !== 'all') installments = installments.filter(i => matchesPaymentFilter(i, cardId));
     const totalInvoice = installments.reduce((s, i) => s + money(i.amount), 0);
     const mine = installments.reduce((s, i) => s + money(i.myAmount), 0);
     const others = installments.reduce((s, i) => s + money(i.otherAmount), 0);
@@ -273,8 +356,12 @@
   }
 
   function cardOptions(activeOnly = false, includeAll = false) {
+    return paymentFilterOptions(includeAll);
+  }
+
+  function cardSelectOptions(activeOnly = false) {
     const cards = activeOnly ? getActiveCards() : state.data.cards;
-    return `${includeAll ? '<option value="all">Todos os cartões</option>' : ''}${cards.map(c => `<option value="${c.id}">${escapeHTML(c.nickname || c.name)} ${c.last4 ? '••' + c.last4 : ''}</option>`).join('')}`;
+    return cards.map(c => `<option value="${c.id}">${escapeHTML(c.nickname || c.name)} ${c.last4 ? '••' + c.last4 : ''}</option>`).join('');
   }
   const categoryOptions = () => state.data.categories.map(c => `<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('');
   const peopleOptions = (includeEmpty = false, includeAll = false) => `${includeAll ? '<option value="all">Todas as pessoas</option>' : ''}${includeEmpty ? '<option value="">Nenhuma</option>' : ''}${state.data.people.map(p => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join('')}`;
@@ -287,7 +374,7 @@
       ['Total da fatura', t.totalInvoice, 'Soma de todas as parcelas no mês', 'rgba(99,102,241,.75)'], ['Meu gasto', t.mine, 'Parte que você deve pagar', 'rgba(34,197,94,.75)'],
       ['Terceiros devem', t.others, 'Valor que outras pessoas precisam devolver', 'rgba(245,158,11,.75)'], ['Já recebido', t.received, 'Pagamentos registrados', 'rgba(6,182,212,.75)'],
       ['Pendente a receber', t.pending, 'Ainda em aberto', 'rgba(239,68,68,.75)'], ['Compras no mês', t.purchaseCount, 'Compras com parcela neste mês', 'rgba(99,102,241,.75)', false],
-      ['Parcelas ativas', t.activeInstallments, 'Parcelas na fatura filtrada', 'rgba(6,182,212,.75)', false], ['Cartões ativos', t.activeCards, 'Cartões disponíveis para compras', 'rgba(34,197,94,.75)', false]
+      ['Parcelas ativas', t.activeInstallments, 'Parcelas na fatura filtrada', 'rgba(6,182,212,.75)', false], ['Formas ativas', t.activeCards, 'Formas de pagamento disponíveis', 'rgba(34,197,94,.75)', false]
     ];
     $('#dashboardMetrics').innerHTML = metrics.map(m => `<div class="metric-card" style="--accent:${m[3]}"><span>${m[0]}</span><strong>${m[4] === false ? m[1] : formatCurrency(m[1])}</strong><small>${m[2]}</small></div>`).join('');
     renderRankings(t.installments); updateCharts(t);
@@ -321,8 +408,8 @@
     chart('invoiceEvolutionChart', 'line', evoLabels, evoData, 'Fatura');
     const byCat = groupSum(t.installments, i => categoryName(i.categoryId), i => money(i.amount));
     chart('categoryChart', 'doughnut', Object.keys(byCat), Object.values(byCat), 'Categorias');
-    const byCard = groupSum(t.installments, i => cardName(i.cardId), i => money(i.amount));
-    chart('cardChart', 'bar', Object.keys(byCard), Object.values(byCard), 'Cartões');
+    const byCard = groupSum(t.installments, i => paymentName(i), i => money(i.amount));
+    chart('cardChart', 'bar', Object.keys(byCard), Object.values(byCard), 'Formas');
     const byPeople = state.data.people.map(p => [p.name, getPersonDebt(p.id, state.filters.dashboard.month, state.filters.dashboard.year).pending]).filter(x=>x[1]>0);
     chart('peopleDebtChart', 'bar', byPeople.map(x=>x[0]), byPeople.map(x=>x[1]), 'Pendências');
     chart('ownerCompareChart', 'pie', ['Minhas compras', 'Compras de terceiros'], [t.mine, t.others], 'Comparação');
@@ -330,14 +417,19 @@
   }
 
   function renderPurchaseForm(existing = null) {
-    const p = existing || { date: new Date().toISOString().slice(0,10), description: '', merchantReal: '', invoiceName: '', total: '', installmentsCount: 1, cardId: getActiveCards()[0]?.id || '', categoryId: state.data.categories[0]?.id || '', type: 'Minha', personId: '', myShare: '', otherShare: '', notes: '', status: 'Pendente' };
+    const p = existing || { date: new Date().toISOString().slice(0,10), description: '', merchantReal: '', invoiceName: '', total: '', paymentMethod: 'Cartão de crédito', installmentsCount: 1, cardId: getActiveCards()[0]?.id || '', categoryId: state.data.categories[0]?.id || '', type: 'Minha', personId: '', myShare: '', otherShare: '', notes: '', status: 'Pendente' };
+    const paymentMethods = ['Cartão de crédito', 'Cartão de débito', 'Pix', 'Dinheiro', 'Boleto', 'Crediário', 'Transferência', 'Outro'];
     $('#purchaseForm').innerHTML = `
       <input type="hidden" name="id" value="${p.id || ''}">
       ${field('Data da compra', 'date', 'date', p.date)}${field('Descrição da compra', 'description', 'text', p.description, 'Ex: Mercado do mês')}
       <label class="field">Estabelecimento real<input name="merchantReal" list="merchantList" value="${escapeHTML(p.merchantReal)}" required><datalist id="merchantList">${state.data.merchants.map(m=>`<option value="${escapeHTML(m.realName)}"></option>`).join('')}</datalist></label>
-      ${field('Nome que aparece na fatura', 'invoiceName', 'text', p.invoiceName)}${field('Valor total', 'total', 'number', p.total, '0,00', 'step="0.01" min="0" required')}${field('Quantidade de parcelas', 'installmentsCount', 'number', p.installmentsCount, '', 'min="1" required')}
-      <label class="field">Valor da parcela<input id="installmentPreview" readonly value="${formatCurrency(money(p.total)/Math.max(1,p.installmentsCount || 1))}"></label>
-      <label class="field">Cartão<select name="cardId" required>${cardOptions(true)}</select></label><label class="field">Categoria<select name="categoryId" required>${categoryOptions()}</select></label>
+      ${field('Nome que aparece na fatura', 'invoiceName', 'text', p.invoiceName)}
+      ${field('Valor total', 'total', 'number', p.total, '0,00', 'step="0.01" min="0" required')}
+      <label class="field">Forma de pagamento<select name="paymentMethod" required>${paymentMethods.map(x=>`<option ${p.paymentMethod===x?'selected':''}>${x}</option>`).join('')}</select></label>
+      <label class="field installment-field">Quantidade de parcelas<input name="installmentsCount" type="number" value="${p.installmentsCount || 1}" min="1" required></label>
+      <label class="field installment-field">Valor da parcela<input id="installmentPreview" readonly value="${formatCurrency(money(p.total)/Math.max(1,p.installmentsCount || 1))}"></label>
+      <label class="field card-field">Cartão utilizado<select name="cardId">${cardSelectOptions(true)}</select></label>
+      <label class="field">Categoria<select name="categoryId" required>${categoryOptions()}</select></label>
       <label class="field">Tipo da compra<select name="type"><option>Minha</option><option>De outra pessoa</option><option>Dividida</option></select></label>
       <label class="field debt-field">Pessoa responsável<select name="personId">${peopleOptions(true)}</select></label>
       ${field('Minha parte', 'myShare', 'number', p.myShare, '0,00', 'step="0.01" min="0"')}${field('Parte da outra pessoa', 'otherShare', 'number', p.otherShare, '0,00', 'step="0.01" min="0"')}
@@ -345,9 +437,11 @@
       <label class="field full">Observações<textarea name="notes">${escapeHTML(p.notes)}</textarea></label>
       <div class="form-actions"><button class="ghost-button" type="reset">Limpar</button><button class="primary-button" type="submit">Salvar compra</button></div>`;
     const form = $('#purchaseForm');
-    ['cardId','categoryId','type','personId','status'].forEach(name => { if (form.elements[name]) form.elements[name].value = p[name] || form.elements[name].value; });
+    ['paymentMethod','cardId','categoryId','type','personId','status'].forEach(name => { if (form.elements[name]) form.elements[name].value = p[name] || form.elements[name].value; });
     updateShareFields();
-    form.oninput = () => { updateInstallmentPreview(); updateShareFields(); };
+    updatePaymentMethodFields();
+    form.oninput = () => { updateInstallmentPreview(); updateShareFields(); updatePaymentMethodFields(); };
+    form.elements.paymentMethod.onchange = () => { updatePaymentMethodFields(); updateInstallmentPreview(); };
     form.elements.merchantReal.onchange = autoFillMerchant;
     form.onsubmit = (e) => { e.preventDefault(); submitPurchaseForm(form); };
   }
@@ -358,8 +452,22 @@
 
   function updateInstallmentPreview() {
     const form = $('#purchaseForm');
-    const total = money(form.elements.total.value); const count = Math.max(1, Number(form.elements.installmentsCount.value || 1));
+    const total = money(form.elements.total.value);
+    const method = form.elements.paymentMethod?.value || 'Cartão de crédito';
+    const count = paymentAllowsInstallments(method) ? Math.max(1, Number(form.elements.installmentsCount.value || 1)) : 1;
+    if (!paymentAllowsInstallments(method)) form.elements.installmentsCount.value = 1;
     $('#installmentPreview').value = formatCurrency(total / count);
+  }
+
+  function updatePaymentMethodFields() {
+    const form = $('#purchaseForm'); if (!form?.elements?.paymentMethod) return;
+    const method = form.elements.paymentMethod.value;
+    const showCard = paymentNeedsCard(method);
+    const showInstallments = paymentAllowsInstallments(method);
+    $$('.card-field').forEach(el => el.style.display = showCard ? 'flex' : 'none');
+    $$('.installment-field').forEach(el => el.style.display = showInstallments ? 'flex' : 'none');
+    if (!showCard) form.elements.cardId.value = '';
+    if (!showInstallments) form.elements.installmentsCount.value = 1;
   }
 
   function updateShareFields() {
@@ -380,7 +488,8 @@
   function submitPurchaseForm(form) {
     try {
       const payload = Object.fromEntries(new FormData(form).entries());
-      if (!payload.description || !payload.date || !payload.total || !payload.cardId) throw new Error('Preencha data, descrição, valor e cartão.');
+      if (!payload.description || !payload.date || !payload.total || !payload.paymentMethod) throw new Error('Preencha data, descrição, valor e forma de pagamento.');
+      if (paymentNeedsCard(payload.paymentMethod) && !payload.cardId) throw new Error('Informe qual cartão foi utilizado.');
       if ((payload.type === 'De outra pessoa' || payload.type === 'Dividida') && !payload.personId) throw new Error('Informe a pessoa responsável.');
       savePurchase(payload); showPage('purchases');
     } catch (err) { toast(err.message, 'error'); }
@@ -390,27 +499,27 @@
     $('#purchaseFilters').innerHTML = filterHTML('purchases'); bindGenericFilters('purchases');
     let list = [...state.data.purchases]; const f = state.filters.purchases;
     if (f.month !== 'all' || f.year !== 'all') { const ids = filterByMonthYear(state.data.installments, f.month, f.year).map(i => i.purchaseId); list = list.filter(p => ids.includes(p.id)); }
-    if (f.cardId !== 'all') list = list.filter(p => p.cardId === f.cardId);
+    if (f.cardId !== 'all') list = list.filter(p => matchesPaymentFilter(p, f.cardId));
     if (f.personId !== 'all') list = list.filter(p => p.personId === f.personId);
     if (f.categoryId !== 'all') list = list.filter(p => p.categoryId === f.categoryId);
     if (f.q) list = list.filter(p => `${p.description} ${p.merchantReal} ${p.invoiceName}`.toLowerCase().includes(f.q.toLowerCase()));
-    $('#purchasesTable').innerHTML = table(list, ['Data','Descrição','Valor','Parcelas','Cartão','Categoria','Tipo','Pessoa','Status','Ações'], p => [formatDate(p.date), escapeHTML(p.description), formatCurrency(p.total), `${p.installmentsCount}x de ${formatCurrency(p.installmentValue)}`, cardName(p.cardId), categoryName(p.categoryId), p.type, personName(p.personId), statusBadge(p.status), `<div class="actions"><button class="mini-btn" onclick="FinCard.editPurchase('${p.id}')">Editar</button><button class="mini-btn" onclick="FinCard.deletePurchase('${p.id}')">Excluir</button></div>`]);
+    $('#purchasesTable').innerHTML = table(list, ['Data','Descrição','Valor','Parcelas','Forma de pagamento','Categoria','Tipo','Pessoa','Status','Ações'], p => [formatDate(p.date), escapeHTML(p.description), formatCurrency(p.total), `${p.installmentsCount}x de ${formatCurrency(p.installmentValue)}`, paymentName(p), categoryName(p.categoryId), p.type, personName(p.personId), statusBadge(p.status), `<div class="actions"><button class="mini-btn" onclick="FinCard.editPurchase('${p.id}')">Editar</button><button class="mini-btn" onclick="FinCard.deletePurchase('${p.id}')">Excluir</button></div>`]);
   }
 
   function renderInstallments() {
     $('#installmentFilters').innerHTML = filterHTML('installments'); bindGenericFilters('installments');
     let list = [...state.data.installments]; const f = state.filters.installments;
     list = filterByMonthYear(list, f.month, f.year);
-    if (f.cardId !== 'all') list = list.filter(i => i.cardId === f.cardId);
+    if (f.cardId !== 'all') list = list.filter(i => matchesPaymentFilter(i, f.cardId));
     if (f.personId !== 'all') list = list.filter(i => i.personId === f.personId);
     if (f.status !== 'all') list = list.filter(i => i.status === f.status);
     list.sort((a,b)=>a.year-b.year || a.month-b.month || a.description.localeCompare(b.description));
-    $('#installmentsTable').innerHTML = table(list, ['Mês','Descrição','Parcela','Valor','Meu valor','Pessoa deve','Cartão','Pessoa','Status','Ações'], i => [`${monthName(i.month)}/${i.year}`, escapeHTML(i.description), i.label, formatCurrency(i.amount), formatCurrency(i.myAmount), formatCurrency(i.otherAmount), cardName(i.cardId), personName(i.personId), statusBadge(i.status), `<div class="actions"><button class="mini-btn" onclick="FinCard.setInstallmentStatus('${i.id}','Pago')">Pago</button><button class="mini-btn" onclick="FinCard.setInstallmentStatus('${i.id}','Pendente')">Pendente</button><button class="mini-btn" onclick="FinCard.showPurchaseDetails('${i.purchaseId}')">Detalhes</button></div>`]);
+    $('#installmentsTable').innerHTML = table(list, ['Mês','Descrição','Parcela','Valor','Meu valor','Pessoa deve','Forma','Pessoa','Status','Ações'], i => [`${monthName(i.month)}/${i.year}`, escapeHTML(i.description), i.label, formatCurrency(i.amount), formatCurrency(i.myAmount), formatCurrency(i.otherAmount), paymentName(i), personName(i.personId), statusBadge(i.status), `<div class="actions"><button class="mini-btn" onclick="FinCard.setInstallmentStatus('${i.id}','Pago')">Pago</button><button class="mini-btn" onclick="FinCard.setInstallmentStatus('${i.id}','Pendente')">Pendente</button><button class="mini-btn" onclick="FinCard.showPurchaseDetails('${i.purchaseId}')">Detalhes</button></div>`]);
   }
 
   function filterHTML(kind) {
     const f = state.filters[kind];
-    const base = `<label>Mês<select data-filter="month"><option value="all">Todos</option>${Array.from({length:12},(_,i)=>`<option value="${i+1}">${monthName(i+1)}</option>`).join('')}</select></label><label>Ano<select data-filter="year">${Array.from({length:7},(_,i)=>currentYear-2+i).map(y=>`<option value="${y}">${y}</option>`).join('')}</select></label><label>Cartão<select data-filter="cardId">${cardOptions(false,true)}</select></label><label>Pessoa<select data-filter="personId">${peopleOptions(false,true)}</select></label>`;
+    const base = `<label>Mês<select data-filter="month"><option value="all">Todos</option>${Array.from({length:12},(_,i)=>`<option value="${i+1}">${monthName(i+1)}</option>`).join('')}</select></label><label>Ano<select data-filter="year">${Array.from({length:7},(_,i)=>currentYear-2+i).map(y=>`<option value="${y}">${y}</option>`).join('')}</select></label><label>Forma<select data-filter="cardId">${cardOptions(false,true)}</select></label><label>Pessoa<select data-filter="personId">${peopleOptions(false,true)}</select></label>`;
     const extra = kind === 'purchases' ? `<label>Categoria<select data-filter="categoryId"><option value="all">Todas</option>${categoryOptions()}</select></label><label>Buscar<input data-filter="q" value="${escapeHTML(f.q || '')}" placeholder="Descrição, estabelecimento..."></label>` : `<label>Status<select data-filter="status"><option value="all">Todos</option><option>Pendente</option><option>Pago</option><option>Parcial</option></select></label>`;
     return base + extra;
   }
@@ -467,7 +576,7 @@
 
   function openCardModal(id) {
     const c = getById(state.data.cards,id) || { name:'', bank:'', nickname:'', last4:'', brand:'Visa', type:'Crédito', closeDay:1, dueDay:10, bestDay:2, limit:'', color:'#6366F1', status:'Ativo', notes:'' };
-    openModal(id ? 'Editar cartão' : 'Novo cartão', `${field('Nome do cartão','name','text',c.name,'','required')}${field('Banco ou instituição','bank','text',c.bank)}${field('Apelido','nickname','text',c.nickname)}${field('Últimos 4 dígitos','last4','text',c.last4)}<label class="field">Bandeira<select name="brand">${['Visa','Mastercard','Elo','Hipercard','American Express','Outro'].map(x=>`<option ${c.brand===x?'selected':''}>${x}</option>`).join('')}</select></label><label class="field">Tipo<select name="type">${['Crédito','Débito','Crédito e Débito'].map(x=>`<option ${c.type===x?'selected':''}>${x}</option>`).join('')}</select></label>${field('Fechamento','closeDay','number',c.closeDay,'','min="1" max="31"')}${field('Vencimento','dueDay','number',c.dueDay,'','min="1" max="31"')}${field('Melhor dia','bestDay','number',c.bestDay,'','min="1" max="31"')}${field('Limite','limit','number',c.limit,'','step="0.01"')}${field('Cor','color','color',c.color)}<label class="field">Status<select name="status"><option ${c.status==='Ativo'?'selected':''}>Ativo</option><option ${c.status==='Inativo'?'selected':''}>Inativo</option></select></label><label class="field full">Observações<textarea name="notes">${escapeHTML(c.notes || '')}</textarea></label>`, values => upsert('cards', { ...c, ...values, id: id || uid('card'), limit: money(values.limit) }));
+    openModal(id ? 'Editar forma de pagamento' : 'Nova forma de pagamento', `${field('Nome da forma','name','text',c.name,'','required')}${field('Banco, instituição ou descrição','bank','text',c.bank)}${field('Apelido','nickname','text',c.nickname)}${field('Últimos 4 dígitos','last4','text',c.last4)}<label class="field">Bandeira<select name="brand">${['Visa','Mastercard','Elo','Hipercard','American Express','Outro'].map(x=>`<option ${c.brand===x?'selected':''}>${x}</option>`).join('')}</select></label><label class="field">Tipo<select name="type">${['Crédito','Débito','Crédito e Débito','Pix','Dinheiro','Boleto','Crediário','Transferência','Outro'].map(x=>`<option ${c.type===x?'selected':''}>${x}</option>`).join('')}</select></label>${field('Fechamento','closeDay','number',c.closeDay,'','min="1" max="31"')}${field('Vencimento','dueDay','number',c.dueDay,'','min="1" max="31"')}${field('Melhor dia','bestDay','number',c.bestDay,'','min="1" max="31"')}${field('Limite','limit','number',c.limit,'','step="0.01"')}${field('Cor','color','color',c.color)}<label class="field">Status<select name="status"><option ${c.status==='Ativo'?'selected':''}>Ativo</option><option ${c.status==='Inativo'?'selected':''}>Inativo</option></select></label><label class="field full">Observações<textarea name="notes">${escapeHTML(c.notes || '')}</textarea></label>`, values => upsert('cards', { ...c, ...values, id: id || uid('card'), limit: money(values.limit) }));
   }
 
   function openPersonModal(id) { const p = getById(state.data.people,id) || { name:'', phone:'', notes:'' }; openModal(id?'Editar pessoa':'Nova pessoa', `${field('Nome','name','text',p.name,'','required')}${field('Telefone','phone','text',p.phone)}<label class="field full">Observações<textarea name="notes">${escapeHTML(p.notes || '')}</textarea></label>`, v => upsert('people',{...p,...v,id:id||uid('person')})); }
@@ -515,7 +624,7 @@
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=6" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=7" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -729,7 +838,7 @@
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=6').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=7').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });

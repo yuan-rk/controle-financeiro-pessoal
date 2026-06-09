@@ -7,10 +7,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="YR Finanças" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="manifest" href="manifest.json?v=6" />
-  <link rel="apple-touch-icon" href="icon-192.png?v=6" />
+  <link rel="manifest" href="manifest.json?v=7" />
+  <link rel="apple-touch-icon" href="icon-192.png?v=7" />
   <title>YR Finanças | Controle Financeiro Pessoal</title>
-  <link rel="icon" type="image/png" href="icon-192.png?v=6" />
+  <link rel="icon" type="image/png" href="icon-192.png?v=7" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -20,7 +20,7 @@
   <div class="app-shell">
     <aside class="sidebar" aria-label="Menu principal">
       <div class="brand">
-        <div class="brand-logo"><img src="icon-192.png?v=6" alt="Logo YR Finanças"></div>
+        <div class="brand-logo"><img src="icon-192.png?v=7" alt="Logo YR Finanças"></div>
         <div>
           <strong>YR Finanças</strong>
           <span>controle de faturas</span>
@@ -53,7 +53,7 @@
         <div class="filters-bar">
           <label>Mês<select id="dashboardMonth"></select></label>
           <label>Ano<select id="dashboardYear"></select></label>
-          <label>Cartão<select id="dashboardCard"></select></label>
+          <label>Forma<select id="dashboardCard"></select></label>
           <button class="secondary-button" id="refreshDashboard">Atualizar</button>
         </div>
 
@@ -82,7 +82,7 @@
 
         <div class="info-grid">
           <article class="panel"><div class="panel-header"><h2>Ranking de devedores</h2></div><div id="peopleRanking" class="stack-list"></div></article>
-          <article class="panel"><div class="panel-header"><h2>Cartões mais usados</h2></div><div id="cardRanking" class="stack-list"></div></article>
+          <article class="panel"><div class="panel-header"><h2>Formas mais usadas</h2></div><div id="cardRanking" class="stack-list"></div></article>
           <article class="panel"><div class="panel-header"><h2>Próximas parcelas</h2></div><div id="nextInstallments" class="stack-list"></div></article>
           <article class="panel"><div class="panel-header"><h2>Resumo por cartão</h2></div><div id="cardSummary" class="stack-list"></div></article>
         </div>
@@ -115,7 +115,7 @@
       </section>
 
       <section class="page" id="cardsPage">
-        <div class="section-head"><div><h2>Cartões</h2><p>Cadastre múltiplos cartões e use apenas os ativos em compras.</p></div><button class="primary-button" id="addCardBtn">+ Cartão</button></div>
+        <div class="section-head"><div><h2>Formas de pagamento</h2><p>Cadastre cartões, Pix, boleto, dinheiro, crediário e outras formas usadas nas compras.</p></div><button class="primary-button" id="addCardBtn">+ Forma</button></div>
         <div id="cardsGrid" class="cards-grid"></div>
       </section>
 
