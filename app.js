@@ -1,0 +1,429 @@
+/* FinCard Pro - sistema local de controle de faturas
+   Tudo é salvo no LocalStorage do navegador. Para produção multi-dispositivo,
+   o próximo passo é trocar a camada de storage por um backend/API. */
+(() => {
+  const STORAGE_KEY = 'fincard-pro-data-v1';
+  const today = new Date();
+  const currentMonth = today.getMonth() + 1;
+  const currentYear = today.getFullYear();
+
+  const menu = [
+    ['dashboard', '📊', 'Dashboard'], ['newPurchase', '➕', 'Nova compra'], ['purchases', '🧾', 'Compras'],
+    ['installments', '📆', 'Parcelas'], ['cards', '💳', 'Cartões'], ['people', '👥', 'Pessoas'],
+    ['payments', '💸', 'Recebimentos'], ['merchants', '🏪', 'Estabelecimentos'], ['categories', '🏷️', 'Categorias'], ['settings', '⚙️', 'Configurações']
+  ];
+
+  const state = {
+    currentPage: 'dashboard',
+    charts: {},
+    filters: {
+      dashboard: { month: currentMonth, year: currentYear, cardId: 'all' },
+      purchases: { month: 'all', year: String(currentYear), cardId: 'all', personId: 'all', categoryId: 'all', q: '' },
+      installments: { month: String(currentMonth), year: String(currentYear), cardId: 'all', personId: 'all', status: 'all' },
+      people: { month: currentMonth, year: currentYear }
+    },
+    data: null
+  };
+
+  const $ = (selector) => document.querySelector(selector);
+  const $$ = (selector) => [...document.querySelectorAll(selector)];
+  const uid = (prefix) => `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const money = (value) => Number(value || 0);
+  const formatCurrency = (value) => money(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const formatDate = (date) => date ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR') : '-';
+  const monthName = (m) => new Date(2026, Number(m) - 1, 1).toLocaleDateString('pt-BR', { month: 'long' });
+  const escapeHTML = (str = '') => String(str).replace(/[&<>'"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[c]));
+
+  function defaultData() {
+    const cards = [
+      { id: uid('card'), name: 'Nubank Platinum', bank: 'Nubank', nickname: 'Roxinho', last4: '1234', brand: 'Mastercard', type: 'Crédito', closeDay: 3, dueDay: 10, bestDay: 4, limit: 4500, color: '#6366F1', status: 'Ativo', notes: 'Cartão principal' },
+      { id: uid('card'), name: 'Inter Gold', bank: 'Banco Inter', nickname: 'Inter', last4: '9876', brand: 'Visa', type: 'Crédito e Débito', closeDay: 15, dueDay: 22, bestDay: 16, limit: 3000, color: '#F59E0B', status: 'Ativo', notes: '' }
+    ];
+    const categories = ['Alimentação','Transporte','Igreja','Estudos','Faculdade','Casa','Compras','Saúde','Lazer','Assinaturas','Viagem','Presente','Outros'].map(name => ({ id: uid('cat'), name, color: '#6366F1' }));
+    const people = ['Ana','Lucas','Pedro'].map(name => ({ id: uid('person'), name, phone: '', notes: '' }));
+    const merchants = [
+      { id: uid('merchant'), realName: 'Edu Pizzas', invoiceName: 'Lojas e Produtos da Terra', categoryId: categories[0].id, notes: 'Nome da maquininha diferente' },
+      { id: uid('merchant'), realName: 'Universidade / Material', invoiceName: 'Papelaria Recife', categoryId: categories[4].id, notes: '' }
+    ];
+    const data = { cards, people, categories, merchants, purchases: [], installments: [], payments: [], settings: { theme: 'dark', seeded: true } };
+    state.data = data;
+    savePurchase({ date: `${currentYear}-${String(currentMonth).padStart(2,'0')}-05`, description: 'Mercado do mês', merchantReal: 'Atacadão', invoiceName: 'ATACADAO RECIFE', total: 420, installmentsCount: 1, cardId: cards[0].id, categoryId: categories[0].id, type: 'Minha', personId: '', myShare: 420, otherShare: 0, notes: 'Compra exemplo', status: 'Pendente' }, false);
+    savePurchase({ date: `${currentYear}-${String(currentMonth).padStart(2,'0')}-09`, description: 'Pizza do grupo', merchantReal: 'Edu Pizzas', invoiceName: 'Lojas e Produtos da Terra', total: 120, installmentsCount: 1, cardId: cards[0].id, categoryId: categories[0].id, type: 'Dividida', personId: people[0].id, myShare: 40, otherShare: 80, notes: '', status: 'Pendente' }, false);
+    savePurchase({ date: `${currentYear}-01-12`, description: 'Notebook faculdade', merchantReal: 'Magazine Luiza', invoiceName: 'MAGAZINE LUIZA', total: 2400, installmentsCount: 12, cardId: cards[1].id, categoryId: categories[4].id, type: 'Minha', personId: '', myShare: 2400, otherShare: 0, notes: 'Parcelado', status: 'Pendente' }, false);
+    state.data.payments.push({ id: uid('pay'), date: `${currentYear}-${String(currentMonth).padStart(2,'0')}-15`, personId: people[0].id, amount: 30, method: 'Pix', relatedId: '', month: currentMonth, year: currentYear, notes: 'Pagamento parcial exemplo' });
+    return state.data;
+  }
+
+  function loadFromStorage() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    state.data = raw ? JSON.parse(raw) : defaultData();
+    if (!raw) saveToStorage(false);
+    document.documentElement.classList.toggle('light', state.data.settings.theme === 'light');
+  }
+
+  function saveToStorage(show = true) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+    if (show) toast('Dados salvos com sucesso.', 'success');
+  }
+
+  function getActiveCards() { return state.data.cards.filter(card => card.status === 'Ativo'); }
+  function getById(list, id) { return list.find(item => item.id === id); }
+  function cardName(id) { const c = getById(state.data.cards, id); return c ? c.nickname || c.name : '-'; }
+  function categoryName(id) { const c = getById(state.data.categories, id); return c ? c.name : '-'; }
+  function personName(id) { const p = getById(state.data.people, id); return p ? p.name : '-'; }
+
+  function addMonths(dateText, offset) {
+    const [y, m, d] = dateText.split('-').map(Number);
+    return new Date(y, m - 1 + offset, d || 1, 12, 0, 0);
+  }
+
+  function generateInstallments(purchase) {
+    const count = Math.max(1, Number(purchase.installmentsCount || 1));
+    const base = Math.floor((money(purchase.total) / count) * 100) / 100;
+    let values = Array.from({ length: count }, () => base);
+    values[count - 1] = +(money(purchase.total) - base * (count - 1)).toFixed(2);
+
+    const myRatio = money(purchase.total) ? money(purchase.myShare) / money(purchase.total) : 0;
+    const otherRatio = money(purchase.total) ? money(purchase.otherShare) / money(purchase.total) : 0;
+
+    return values.map((value, index) => {
+      const ref = addMonths(purchase.date, index);
+      return {
+        id: uid('inst'), purchaseId: purchase.id, purchaseDate: purchase.date,
+        month: ref.getMonth() + 1, year: ref.getFullYear(), description: purchase.description,
+        merchantReal: purchase.merchantReal, invoiceName: purchase.invoiceName, number: index + 1,
+        totalInstallments: count, label: `${index + 1}/${count}`, amount: value, cardId: purchase.cardId,
+        categoryId: purchase.categoryId, type: purchase.type, personId: purchase.personId, status: purchase.status,
+        myAmount: +(value * myRatio).toFixed(2), otherAmount: +(value * otherRatio).toFixed(2)
+      };
+    });
+  }
+
+  function savePurchase(payload, persist = true) {
+    const total = money(payload.total);
+    const count = Math.max(1, Number(payload.installmentsCount || 1));
+    const type = payload.type;
+    let myShare = money(payload.myShare);
+    let otherShare = money(payload.otherShare);
+    if (type === 'Minha') { myShare = total; otherShare = 0; payload.personId = ''; }
+    if (type === 'De outra pessoa') { myShare = 0; otherShare = total; }
+    if (type === 'Dividida' && Math.abs((myShare + otherShare) - total) > 0.01) throw new Error('Na compra dividida, sua parte + parte da outra pessoa deve ser igual ao total.');
+
+    const purchase = { id: payload.id || uid('purchase'), date: payload.date, description: payload.description.trim(), merchantReal: payload.merchantReal.trim(), invoiceName: payload.invoiceName.trim(), total, installmentsCount: count, installmentValue: +(total / count).toFixed(2), cardId: payload.cardId, categoryId: payload.categoryId, type, personId: payload.personId || '', myShare, otherShare, notes: payload.notes || '', status: payload.status || 'Pendente', createdAt: new Date().toISOString() };
+
+    state.data.purchases = state.data.purchases.filter(p => p.id !== purchase.id);
+    state.data.installments = state.data.installments.filter(i => i.purchaseId !== purchase.id);
+    state.data.purchases.push(purchase);
+    state.data.installments.push(...generateInstallments(purchase));
+    if (persist) { saveToStorage(); renderAll(); }
+    return purchase;
+  }
+
+  function deletePurchase(id) {
+    if (!confirm('Excluir esta compra e todas as parcelas geradas?')) return;
+    state.data.purchases = state.data.purchases.filter(p => p.id !== id);
+    state.data.installments = state.data.installments.filter(i => i.purchaseId !== id);
+    saveToStorage(); renderAll();
+  }
+
+  function filterByMonthYear(items, month, year) {
+    return items.filter(item => (String(month) === 'all' || Number(item.month) === Number(month)) && (String(year) === 'all' || Number(item.year) === Number(year)));
+  }
+
+  function paymentsFor(personId, month = 'all', year = 'all') {
+    return state.data.payments.filter(p => (!personId || p.personId === personId) && (String(month) === 'all' || Number(p.month) === Number(month)) && (String(year) === 'all' || Number(p.year) === Number(year)));
+  }
+
+  function getPersonDebt(personId, month = 'all', year = 'all') {
+    const installments = filterByMonthYear(state.data.installments, month, year).filter(i => i.personId === personId);
+    const total = installments.reduce((sum, i) => sum + money(i.otherAmount), 0);
+    const paid = paymentsFor(personId, month, year).reduce((sum, p) => sum + money(p.amount), 0);
+    const pending = Math.max(0, total - paid);
+    const openAll = Math.max(0, state.data.installments.filter(i => i.personId === personId).reduce((s, i) => s + money(i.otherAmount), 0) - paymentsFor(personId).reduce((s, p) => s + money(p.amount), 0));
+    return { total, paid, pending, openAll, countOpen: installments.filter(i => i.otherAmount > 0).length, status: pending <= 0 ? 'OK' : paid > 0 ? 'Parcial' : 'Pendente' };
+  }
+
+  function calculateDashboardTotals() {
+    const { month, year, cardId } = state.filters.dashboard;
+    let installments = filterByMonthYear(state.data.installments, month, year);
+    if (cardId !== 'all') installments = installments.filter(i => i.cardId === cardId);
+    const totalInvoice = installments.reduce((s, i) => s + money(i.amount), 0);
+    const mine = installments.reduce((s, i) => s + money(i.myAmount), 0);
+    const others = installments.reduce((s, i) => s + money(i.otherAmount), 0);
+    const peopleIds = [...new Set(installments.map(i => i.personId).filter(Boolean))];
+    const received = peopleIds.reduce((s, id) => s + paymentsFor(id, month, year).reduce((p, pay) => p + money(pay.amount), 0), 0);
+    return { installments, totalInvoice, mine, others, received, pending: Math.max(0, others - received), purchaseCount: new Set(installments.map(i => i.purchaseId)).size, activeInstallments: installments.length, activeCards: getActiveCards().length };
+  }
+
+  function renderNav() {
+    const make = (items) => items.map(([id, icon, label]) => `<button class="nav-btn ${state.currentPage === id ? 'active' : ''}" data-page="${id}"><span class="nav-icon">${icon}</span><span>${label}</span></button>`).join('');
+    $('#desktopNav').innerHTML = make(menu);
+    $('#drawerNav').innerHTML = make(menu);
+    $('#mobileNav').innerHTML = make(menu.slice(0, 5));
+    $$('.nav-btn').forEach(btn => btn.onclick = () => showPage(btn.dataset.page));
+  }
+
+  function showPage(page) {
+    state.currentPage = page;
+    $$('.page').forEach(p => p.classList.remove('active'));
+    $(`#${page}Page`).classList.add('active');
+    $('#pageTitle').textContent = menu.find(m => m[0] === page)?.[2] || 'FinCard Pro';
+    $('#mobileDrawer').classList.remove('show');
+    renderNav();
+    renderAll(false);
+  }
+
+  function fillMonthYear(selectMonth, selectYear, selectedMonth, selectedYear, allowAll = false) {
+    const monthOptions = allowAll ? '<option value="all">Todos</option>' : '';
+    selectMonth.innerHTML = monthOptions + Array.from({ length: 12 }, (_, i) => `<option value="${i+1}">${monthName(i+1)}</option>`).join('');
+    selectYear.innerHTML = Array.from({ length: 7 }, (_, i) => currentYear - 2 + i).map(y => `<option value="${y}">${y}</option>`).join('');
+    selectMonth.value = selectedMonth; selectYear.value = selectedYear;
+  }
+
+  function cardOptions(activeOnly = false, includeAll = false) {
+    const cards = activeOnly ? getActiveCards() : state.data.cards;
+    return `${includeAll ? '<option value="all">Todos os cartões</option>' : ''}${cards.map(c => `<option value="${c.id}">${escapeHTML(c.nickname || c.name)} ${c.last4 ? '••' + c.last4 : ''}</option>`).join('')}`;
+  }
+  const categoryOptions = () => state.data.categories.map(c => `<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('');
+  const peopleOptions = (includeEmpty = false, includeAll = false) => `${includeAll ? '<option value="all">Todas as pessoas</option>' : ''}${includeEmpty ? '<option value="">Nenhuma</option>' : ''}${state.data.people.map(p => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join('')}`;
+
+  function renderDashboard() {
+    fillMonthYear($('#dashboardMonth'), $('#dashboardYear'), state.filters.dashboard.month, state.filters.dashboard.year);
+    $('#dashboardCard').innerHTML = cardOptions(false, true); $('#dashboardCard').value = state.filters.dashboard.cardId;
+    const t = calculateDashboardTotals();
+    const metrics = [
+      ['Total da fatura', t.totalInvoice, 'Soma de todas as parcelas no mês', 'rgba(99,102,241,.75)'], ['Meu gasto', t.mine, 'Parte que você deve pagar', 'rgba(34,197,94,.75)'],
+      ['Terceiros devem', t.others, 'Valor que outras pessoas precisam devolver', 'rgba(245,158,11,.75)'], ['Já recebido', t.received, 'Pagamentos registrados', 'rgba(6,182,212,.75)'],
+      ['Pendente a receber', t.pending, 'Ainda em aberto', 'rgba(239,68,68,.75)'], ['Compras no mês', t.purchaseCount, 'Compras com parcela neste mês', 'rgba(99,102,241,.75)', false],
+      ['Parcelas ativas', t.activeInstallments, 'Parcelas na fatura filtrada', 'rgba(6,182,212,.75)', false], ['Cartões ativos', t.activeCards, 'Cartões disponíveis para compras', 'rgba(34,197,94,.75)', false]
+    ];
+    $('#dashboardMetrics').innerHTML = metrics.map(m => `<div class="metric-card" style="--accent:${m[3]}"><span>${m[0]}</span><strong>${m[4] === false ? m[1] : formatCurrency(m[1])}</strong><small>${m[2]}</small></div>`).join('');
+    renderRankings(t.installments); updateCharts(t);
+  }
+
+  function renderRankings(installments) {
+    const people = state.data.people.map(p => ({ ...p, debt: getPersonDebt(p.id, state.filters.dashboard.month, state.filters.dashboard.year).pending })).filter(p => p.debt > 0).sort((a,b)=>b.debt-a.debt);
+    $('#peopleRanking').innerHTML = people.length ? people.slice(0,5).map(p => `<div class="stack-item"><div><strong>${escapeHTML(p.name)}</strong><span>Pendente no mês</span></div><b>${formatCurrency(p.debt)}</b></div>`).join('') : emptyHTML();
+    const cards = state.data.cards.map(c => ({ ...c, total: installments.filter(i => i.cardId === c.id).reduce((s,i)=>s+money(i.amount),0) })).filter(c => c.total > 0).sort((a,b)=>b.total-a.total);
+    $('#cardRanking').innerHTML = cards.length ? cards.slice(0,5).map(c => `<div class="stack-item"><div><strong>${escapeHTML(c.nickname || c.name)}</strong><span>${escapeHTML(c.bank || '')}</span></div><b>${formatCurrency(c.total)}</b></div>`).join('') : emptyHTML();
+    const next = state.data.installments.filter(i => i.year > currentYear || (i.year === currentYear && i.month >= currentMonth)).sort((a,b)=>a.year-b.year || a.month-b.month).slice(0,6);
+    $('#nextInstallments').innerHTML = next.length ? next.map(i => `<div class="stack-item"><div><strong>${escapeHTML(i.description)} <span>${i.label}</span></strong><span>${monthName(i.month)}/${i.year} • ${cardName(i.cardId)}</span></div><b>${formatCurrency(i.amount)}</b></div>`).join('') : emptyHTML();
+    $('#cardSummary').innerHTML = cards.length ? cards.map(c => `<div class="stack-item"><div><strong>${escapeHTML(c.nickname || c.name)}</strong><span>${escapeHTML(c.brand)} • ${c.status}</span></div><span class="badge ${c.status === 'Ativo' ? 'ok' : 'danger'}">${formatCurrency(c.total)}</span></div>`).join('') : emptyHTML();
+  }
+
+  function chart(id, type, labels, data, label) {
+    const ctx = document.getElementById(id);
+    if (state.charts[id]) state.charts[id].destroy();
+    const textColor = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim();
+    state.charts[id] = new Chart(ctx, { type, data: { labels, datasets: [{ label, data, borderWidth: 2, tension: .35, fill: type === 'line', backgroundColor: ['#6366F1','#06B6D4','#22C55E','#F59E0B','#EF4444','#8B5CF6','#14B8A6','#F97316'], borderColor: '#6366F1' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor } } }, scales: type === 'doughnut' || type === 'pie' ? {} : { x: { ticks: { color: textColor }, grid: { color: 'rgba(148,163,184,.12)' } }, y: { ticks: { color: textColor }, grid: { color: 'rgba(148,163,184,.12)' } } } } });
+  }
+
+  function groupSum(items, keyFn, valueFn) {
+    return items.reduce((acc, item) => { const k = keyFn(item); acc[k] = (acc[k] || 0) + valueFn(item); return acc; }, {});
+  }
+
+  function updateCharts(t) {
+    const lastMonths = Array.from({ length: 6 }, (_, idx) => addMonths(`${state.filters.dashboard.year}-${String(state.filters.dashboard.month).padStart(2,'0')}-01`, idx - 5));
+    const evoLabels = lastMonths.map(d => `${monthName(d.getMonth()+1).slice(0,3)}/${String(d.getFullYear()).slice(2)}`);
+    const evoData = lastMonths.map(d => state.data.installments.filter(i => i.month === d.getMonth()+1 && i.year === d.getFullYear()).reduce((s,i)=>s+money(i.amount),0));
+    chart('invoiceEvolutionChart', 'line', evoLabels, evoData, 'Fatura');
+    const byCat = groupSum(t.installments, i => categoryName(i.categoryId), i => money(i.amount));
+    chart('categoryChart', 'doughnut', Object.keys(byCat), Object.values(byCat), 'Categorias');
+    const byCard = groupSum(t.installments, i => cardName(i.cardId), i => money(i.amount));
+    chart('cardChart', 'bar', Object.keys(byCard), Object.values(byCard), 'Cartões');
+    const byPeople = state.data.people.map(p => [p.name, getPersonDebt(p.id, state.filters.dashboard.month, state.filters.dashboard.year).pending]).filter(x=>x[1]>0);
+    chart('peopleDebtChart', 'bar', byPeople.map(x=>x[0]), byPeople.map(x=>x[1]), 'Pendências');
+    chart('ownerCompareChart', 'pie', ['Minhas compras', 'Compras de terceiros'], [t.mine, t.others], 'Comparação');
+    chart('receivedPendingChart', 'doughnut', ['Recebido', 'Pendente'], [t.received, t.pending], 'Recebimentos');
+  }
+
+  function renderPurchaseForm(existing = null) {
+    const p = existing || { date: new Date().toISOString().slice(0,10), description: '', merchantReal: '', invoiceName: '', total: '', installmentsCount: 1, cardId: getActiveCards()[0]?.id || '', categoryId: state.data.categories[0]?.id || '', type: 'Minha', personId: '', myShare: '', otherShare: '', notes: '', status: 'Pendente' };
+    $('#purchaseForm').innerHTML = `
+      <input type="hidden" name="id" value="${p.id || ''}">
+      ${field('Data da compra', 'date', 'date', p.date)}${field('Descrição da compra', 'description', 'text', p.description, 'Ex: Mercado do mês')}
+      <label class="field">Estabelecimento real<input name="merchantReal" list="merchantList" value="${escapeHTML(p.merchantReal)}" required><datalist id="merchantList">${state.data.merchants.map(m=>`<option value="${escapeHTML(m.realName)}"></option>`).join('')}</datalist></label>
+      ${field('Nome que aparece na fatura', 'invoiceName', 'text', p.invoiceName)}${field('Valor total', 'total', 'number', p.total, '0,00', 'step="0.01" min="0" required')}${field('Quantidade de parcelas', 'installmentsCount', 'number', p.installmentsCount, '', 'min="1" required')}
+      <label class="field">Valor da parcela<input id="installmentPreview" readonly value="${formatCurrency(money(p.total)/Math.max(1,p.installmentsCount || 1))}"></label>
+      <label class="field">Cartão<select name="cardId" required>${cardOptions(true)}</select></label><label class="field">Categoria<select name="categoryId" required>${categoryOptions()}</select></label>
+      <label class="field">Tipo da compra<select name="type"><option>Minha</option><option>De outra pessoa</option><option>Dividida</option></select></label>
+      <label class="field debt-field">Pessoa responsável<select name="personId">${peopleOptions(true)}</select></label>
+      ${field('Minha parte', 'myShare', 'number', p.myShare, '0,00', 'step="0.01" min="0"')}${field('Parte da outra pessoa', 'otherShare', 'number', p.otherShare, '0,00', 'step="0.01" min="0"')}
+      <label class="field">Status inicial<select name="status"><option>Pendente</option><option>Pago</option><option>Parcial</option></select></label>
+      <label class="field full">Observações<textarea name="notes">${escapeHTML(p.notes)}</textarea></label>
+      <div class="form-actions"><button class="ghost-button" type="reset">Limpar</button><button class="primary-button" type="submit">Salvar compra</button></div>`;
+    const form = $('#purchaseForm');
+    ['cardId','categoryId','type','personId','status'].forEach(name => { if (form.elements[name]) form.elements[name].value = p[name] || form.elements[name].value; });
+    updateShareFields();
+    form.oninput = () => { updateInstallmentPreview(); updateShareFields(); };
+    form.elements.merchantReal.onchange = autoFillMerchant;
+    form.onsubmit = (e) => { e.preventDefault(); submitPurchaseForm(form); };
+  }
+
+  function field(label, name, type, value = '', placeholder = '', extra = '') {
+    return `<label class="field">${label}<input name="${name}" type="${type}" value="${escapeHTML(value)}" placeholder="${placeholder}" ${extra}></label>`;
+  }
+
+  function updateInstallmentPreview() {
+    const form = $('#purchaseForm');
+    const total = money(form.elements.total.value); const count = Math.max(1, Number(form.elements.installmentsCount.value || 1));
+    $('#installmentPreview').value = formatCurrency(total / count);
+  }
+
+  function updateShareFields() {
+    const form = $('#purchaseForm'); if (!form?.elements?.type) return;
+    const type = form.elements.type.value; const total = money(form.elements.total.value);
+    const person = form.elements.personId.closest('.field'); const my = form.elements.myShare.closest('.field'); const other = form.elements.otherShare.closest('.field');
+    person.style.display = type === 'Minha' ? 'none' : 'flex'; my.style.display = type === 'Dividida' ? 'flex' : 'none'; other.style.display = type === 'Dividida' ? 'flex' : 'none';
+    if (type === 'Minha') { form.elements.myShare.value = total || ''; form.elements.otherShare.value = 0; }
+    if (type === 'De outra pessoa') { form.elements.myShare.value = 0; form.elements.otherShare.value = total || ''; }
+  }
+
+  function autoFillMerchant() {
+    const form = $('#purchaseForm');
+    const found = state.data.merchants.find(m => m.realName.toLowerCase() === form.elements.merchantReal.value.toLowerCase());
+    if (found) { form.elements.invoiceName.value = found.invoiceName; form.elements.categoryId.value = found.categoryId; toast('Estabelecimento encontrado: nome da fatura e categoria preenchidos.', 'success'); }
+  }
+
+  function submitPurchaseForm(form) {
+    try {
+      const payload = Object.fromEntries(new FormData(form).entries());
+      if (!payload.description || !payload.date || !payload.total || !payload.cardId) throw new Error('Preencha data, descrição, valor e cartão.');
+      if ((payload.type === 'De outra pessoa' || payload.type === 'Dividida') && !payload.personId) throw new Error('Informe a pessoa responsável.');
+      savePurchase(payload); showPage('purchases');
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  function renderPurchases() {
+    $('#purchaseFilters').innerHTML = filterHTML('purchases'); bindGenericFilters('purchases');
+    let list = [...state.data.purchases]; const f = state.filters.purchases;
+    if (f.month !== 'all' || f.year !== 'all') { const ids = filterByMonthYear(state.data.installments, f.month, f.year).map(i => i.purchaseId); list = list.filter(p => ids.includes(p.id)); }
+    if (f.cardId !== 'all') list = list.filter(p => p.cardId === f.cardId);
+    if (f.personId !== 'all') list = list.filter(p => p.personId === f.personId);
+    if (f.categoryId !== 'all') list = list.filter(p => p.categoryId === f.categoryId);
+    if (f.q) list = list.filter(p => `${p.description} ${p.merchantReal} ${p.invoiceName}`.toLowerCase().includes(f.q.toLowerCase()));
+    $('#purchasesTable').innerHTML = table(list, ['Data','Descrição','Valor','Parcelas','Cartão','Categoria','Tipo','Pessoa','Status','Ações'], p => [formatDate(p.date), escapeHTML(p.description), formatCurrency(p.total), `${p.installmentsCount}x de ${formatCurrency(p.installmentValue)}`, cardName(p.cardId), categoryName(p.categoryId), p.type, personName(p.personId), statusBadge(p.status), `<div class="actions"><button class="mini-btn" onclick="FinCard.editPurchase('${p.id}')">Editar</button><button class="mini-btn" onclick="FinCard.deletePurchase('${p.id}')">Excluir</button></div>`]);
+  }
+
+  function renderInstallments() {
+    $('#installmentFilters').innerHTML = filterHTML('installments'); bindGenericFilters('installments');
+    let list = [...state.data.installments]; const f = state.filters.installments;
+    list = filterByMonthYear(list, f.month, f.year);
+    if (f.cardId !== 'all') list = list.filter(i => i.cardId === f.cardId);
+    if (f.personId !== 'all') list = list.filter(i => i.personId === f.personId);
+    if (f.status !== 'all') list = list.filter(i => i.status === f.status);
+    list.sort((a,b)=>a.year-b.year || a.month-b.month || a.description.localeCompare(b.description));
+    $('#installmentsTable').innerHTML = table(list, ['Mês','Descrição','Parcela','Valor','Meu valor','Pessoa deve','Cartão','Pessoa','Status','Ações'], i => [`${monthName(i.month)}/${i.year}`, escapeHTML(i.description), i.label, formatCurrency(i.amount), formatCurrency(i.myAmount), formatCurrency(i.otherAmount), cardName(i.cardId), personName(i.personId), statusBadge(i.status), `<div class="actions"><button class="mini-btn" onclick="FinCard.setInstallmentStatus('${i.id}','Pago')">Pago</button><button class="mini-btn" onclick="FinCard.setInstallmentStatus('${i.id}','Pendente')">Pendente</button><button class="mini-btn" onclick="FinCard.showPurchaseDetails('${i.purchaseId}')">Detalhes</button></div>`]);
+  }
+
+  function filterHTML(kind) {
+    const f = state.filters[kind];
+    const base = `<label>Mês<select data-filter="month"><option value="all">Todos</option>${Array.from({length:12},(_,i)=>`<option value="${i+1}">${monthName(i+1)}</option>`).join('')}</select></label><label>Ano<select data-filter="year">${Array.from({length:7},(_,i)=>currentYear-2+i).map(y=>`<option value="${y}">${y}</option>`).join('')}</select></label><label>Cartão<select data-filter="cardId">${cardOptions(false,true)}</select></label><label>Pessoa<select data-filter="personId">${peopleOptions(false,true)}</select></label>`;
+    const extra = kind === 'purchases' ? `<label>Categoria<select data-filter="categoryId"><option value="all">Todas</option>${categoryOptions()}</select></label><label>Buscar<input data-filter="q" value="${escapeHTML(f.q || '')}" placeholder="Descrição, estabelecimento..."></label>` : `<label>Status<select data-filter="status"><option value="all">Todos</option><option>Pendente</option><option>Pago</option><option>Parcial</option></select></label>`;
+    return base + extra;
+  }
+
+  function bindGenericFilters(kind) {
+    $$(`#${kind === 'purchases' ? 'purchaseFilters' : 'installmentFilters'} [data-filter]`).forEach(el => { el.value = state.filters[kind][el.dataset.filter]; el.oninput = () => { state.filters[kind][el.dataset.filter] = el.value; kind === 'purchases' ? renderPurchases() : renderInstallments(); }; });
+  }
+
+  function statusBadge(status) { const cls = status === 'Pago' ? 'paid' : status === 'Parcial' ? 'partial' : status === 'OK' ? 'ok' : 'pending'; return `<span class="badge ${cls}">${status}</span>`; }
+  function emptyHTML() { return $('#emptyTemplate').innerHTML; }
+  function table(list, headers, rowFn) { if (!list.length) return emptyHTML(); return `<div class="table-wrap"><table class="data-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${list.map(item=>`<tr>${rowFn(item).map(cell=>`<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`; }
+
+  function renderCards() {
+    $('#cardsGrid').innerHTML = state.data.cards.length ? state.data.cards.map(c => `<article class="credit-card" style="--card-color:${c.color || '#6366F1'}"><div class="card-top"><div><h3>${escapeHTML(c.nickname || c.name)}</h3><p>${escapeHTML(c.bank)} • ${escapeHTML(c.brand)}</p></div>${statusBadge(c.status)}</div><p>•••• ${escapeHTML(c.last4 || '----')} • ${escapeHTML(c.type)}</p><p>Fecha dia ${c.closeDay} • vence dia ${c.dueDay} • melhor dia ${c.bestDay}</p><div class="limit"><strong>${c.limit ? formatCurrency(c.limit) : 'Sem limite informado'}</strong><div class="actions"><button class="mini-btn" onclick="FinCard.openCardModal('${c.id}')">Editar</button><button class="mini-btn" onclick="FinCard.deleteItem('cards','${c.id}')">Excluir</button></div></div></article>`).join('') : emptyHTML();
+  }
+
+  function renderPeople() {
+    fillMonthYear($('#peopleMonth'), $('#peopleYear'), state.filters.people.month, state.filters.people.year);
+    const { month, year } = state.filters.people;
+    $('#peopleGrid').innerHTML = state.data.people.length ? state.data.people.map(p => { const d = getPersonDebt(p.id, month, year); const last = paymentsFor(p.id).sort((a,b)=>b.date.localeCompare(a.date))[0]; return `<article class="person-card" style="--card-color:${d.pending > 0 ? '#F59E0B' : '#22C55E'}"><div class="card-top"><div><h3>${escapeHTML(p.name)}</h3><p>Status: ${d.status}</p></div>${statusBadge(d.status)}</div><p>Deve no mês: <strong>${formatCurrency(d.total)}</strong></p><p>Recebido no mês: <strong>${formatCurrency(d.paid)}</strong></p><p>Pendente no mês: <strong>${formatCurrency(d.pending)}</strong></p><p>Total geral aberto: <strong>${formatCurrency(d.openAll)}</strong></p><p>Último pagamento: ${last ? formatDate(last.date) : '-'}</p><div class="actions"><button class="mini-btn" onclick="FinCard.personHistory('${p.id}')">Histórico</button><button class="mini-btn" onclick="FinCard.openPersonModal('${p.id}')">Editar</button><button class="mini-btn" onclick="FinCard.deleteItem('people','${p.id}')">Excluir</button></div></article>`; }).join('') : emptyHTML();
+  }
+
+  function renderPayments() {
+    const list = [...state.data.payments].sort((a,b)=>b.date.localeCompare(a.date));
+    $('#paymentsTable').innerHTML = table(list, ['Data','Pessoa','Valor','Forma','Referência','Observações','Ações'], p => [formatDate(p.date), personName(p.personId), formatCurrency(p.amount), p.method, `${monthName(p.month)}/${p.year}`, escapeHTML(p.notes || ''), `<div class="actions"><button class="mini-btn" onclick="FinCard.openPaymentModal('${p.id}')">Editar</button><button class="mini-btn" onclick="FinCard.deleteItem('payments','${p.id}')">Excluir</button></div>`]);
+  }
+
+  function renderMerchants() {
+    $('#merchantsTable').innerHTML = table(state.data.merchants, ['Real','Na fatura','Categoria padrão','Observações','Ações'], m => [escapeHTML(m.realName), escapeHTML(m.invoiceName), categoryName(m.categoryId), escapeHTML(m.notes || ''), `<div class="actions"><button class="mini-btn" onclick="FinCard.openMerchantModal('${m.id}')">Editar</button><button class="mini-btn" onclick="FinCard.deleteItem('merchants','${m.id}')">Excluir</button></div>`]);
+  }
+
+  function renderCategories() {
+    $('#categoriesGrid').innerHTML = state.data.categories.length ? state.data.categories.map(c => `<div class="tag-pill">🏷️ <strong>${escapeHTML(c.name)}</strong><button class="mini-btn" onclick="FinCard.openCategoryModal('${c.id}')">Editar</button><button class="mini-btn" onclick="FinCard.deleteItem('categories','${c.id}')">Excluir</button></div>`).join('') : emptyHTML();
+  }
+
+  function renderAll(includeCurrent = true) {
+    if (includeCurrent || state.currentPage === 'dashboard') renderDashboard();
+    if (includeCurrent || state.currentPage === 'newPurchase') renderPurchaseForm();
+    if (includeCurrent || state.currentPage === 'purchases') renderPurchases();
+    if (includeCurrent || state.currentPage === 'installments') renderInstallments();
+    if (includeCurrent || state.currentPage === 'cards') renderCards();
+    if (includeCurrent || state.currentPage === 'people') renderPeople();
+    if (includeCurrent || state.currentPage === 'payments') renderPayments();
+    if (includeCurrent || state.currentPage === 'merchants') renderMerchants();
+    if (includeCurrent || state.currentPage === 'categories') renderCategories();
+  }
+
+  function openModal(title, html, onSubmit) {
+    $('#modalTitle').textContent = title; $('#modalBody').innerHTML = `<form class="smart-form" id="modalForm">${html}<div class="form-actions"><button type="button" class="ghost-button" id="cancelModal">Cancelar</button><button class="primary-button" type="submit">Salvar</button></div></form>`;
+    $('#modalBackdrop').classList.add('show'); $('#modalBackdrop').setAttribute('aria-hidden','false');
+    $('#cancelModal').onclick = closeModal; $('#modalForm').onsubmit = (e) => { e.preventDefault(); onSubmit(Object.fromEntries(new FormData(e.target).entries())); closeModal(); saveToStorage(); renderAll(); };
+  }
+  function closeModal(){ $('#modalBackdrop').classList.remove('show'); $('#modalBackdrop').setAttribute('aria-hidden','true'); }
+
+  function openCardModal(id) {
+    const c = getById(state.data.cards,id) || { name:'', bank:'', nickname:'', last4:'', brand:'Visa', type:'Crédito', closeDay:1, dueDay:10, bestDay:2, limit:'', color:'#6366F1', status:'Ativo', notes:'' };
+    openModal(id ? 'Editar cartão' : 'Novo cartão', `${field('Nome do cartão','name','text',c.name,'','required')}${field('Banco ou instituição','bank','text',c.bank)}${field('Apelido','nickname','text',c.nickname)}${field('Últimos 4 dígitos','last4','text',c.last4)}<label class="field">Bandeira<select name="brand">${['Visa','Mastercard','Elo','Hipercard','American Express','Outro'].map(x=>`<option ${c.brand===x?'selected':''}>${x}</option>`).join('')}</select></label><label class="field">Tipo<select name="type">${['Crédito','Débito','Crédito e Débito'].map(x=>`<option ${c.type===x?'selected':''}>${x}</option>`).join('')}</select></label>${field('Fechamento','closeDay','number',c.closeDay,'','min="1" max="31"')}${field('Vencimento','dueDay','number',c.dueDay,'','min="1" max="31"')}${field('Melhor dia','bestDay','number',c.bestDay,'','min="1" max="31"')}${field('Limite','limit','number',c.limit,'','step="0.01"')}${field('Cor','color','color',c.color)}<label class="field">Status<select name="status"><option ${c.status==='Ativo'?'selected':''}>Ativo</option><option ${c.status==='Inativo'?'selected':''}>Inativo</option></select></label><label class="field full">Observações<textarea name="notes">${escapeHTML(c.notes || '')}</textarea></label>`, values => upsert('cards', { ...c, ...values, id: id || uid('card'), limit: money(values.limit) }));
+  }
+
+  function openPersonModal(id) { const p = getById(state.data.people,id) || { name:'', phone:'', notes:'' }; openModal(id?'Editar pessoa':'Nova pessoa', `${field('Nome','name','text',p.name,'','required')}${field('Telefone','phone','text',p.phone)}<label class="field full">Observações<textarea name="notes">${escapeHTML(p.notes || '')}</textarea></label>`, v => upsert('people',{...p,...v,id:id||uid('person')})); }
+  function openCategoryModal(id) { const c = getById(state.data.categories,id) || { name:'', color:'#6366F1' }; openModal(id?'Editar categoria':'Nova categoria', `${field('Nome','name','text',c.name,'','required')}${field('Cor','color','color',c.color || '#6366F1')}`, v => upsert('categories',{...c,...v,id:id||uid('cat')})); }
+  function openMerchantModal(id) { const m = getById(state.data.merchants,id) || { realName:'', invoiceName:'', categoryId:state.data.categories[0]?.id || '', notes:'' }; openModal(id?'Editar estabelecimento':'Novo estabelecimento', `${field('Estabelecimento real','realName','text',m.realName,'','required')}${field('Nome na fatura','invoiceName','text',m.invoiceName,'','required')}<label class="field">Categoria padrão<select name="categoryId">${categoryOptions()}</select></label><label class="field full">Observações<textarea name="notes">${escapeHTML(m.notes || '')}</textarea></label>`, v => upsert('merchants',{...m,...v,id:id||uid('merchant')})); setTimeout(()=>{$('#modalForm').elements.categoryId.value=m.categoryId},0); }
+  function openPaymentModal(id) { const p = getById(state.data.payments,id) || { date:new Date().toISOString().slice(0,10), personId:'', amount:'', method:'Pix', relatedId:'', month:currentMonth, year:currentYear, notes:'' }; openModal(id?'Editar recebimento':'Novo recebimento', `${field('Data','date','date',p.date,'','required')}<label class="field">Pessoa<select name="personId" required>${peopleOptions()}</select></label>${field('Valor recebido','amount','number',p.amount,'','step="0.01" required')}<label class="field">Forma<select name="method">${['Pix','Dinheiro','Transferência','Cartão','Outro'].map(x=>`<option ${p.method===x?'selected':''}>${x}</option>`).join('')}</select></label><label class="field">Mês<select name="month">${Array.from({length:12},(_,i)=>`<option value="${i+1}">${monthName(i+1)}</option>`).join('')}</select></label>${field('Ano','year','number',p.year)}${field('Compra/parcela relacionada','relatedId','text',p.relatedId || '')}<label class="field full">Observações<textarea name="notes">${escapeHTML(p.notes || '')}</textarea></label>`, v => upsert('payments',{...p,...v,id:id||uid('pay'),amount:money(v.amount),month:Number(v.month),year:Number(v.year)})); setTimeout(()=>{const f=$('#modalForm').elements; f.personId.value=p.personId; f.month.value=p.month;},0); }
+
+  function upsert(list, item) { state.data[list] = state.data[list].filter(x => x.id !== item.id); state.data[list].push(item); }
+  function deleteItem(list, id) { if (!confirm('Tem certeza que deseja excluir este item?')) return; state.data[list] = state.data[list].filter(x => x.id !== id); saveToStorage(); renderAll(); }
+
+  function exportData() {
+    const blob = new Blob([JSON.stringify(state.data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a');
+    a.href = url; a.download = `backup-fincard-pro-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
+  }
+  function importData(file) {
+    const reader = new FileReader();
+    reader.onload = () => { try { const parsed = JSON.parse(reader.result); ['cards','people','categories','merchants','purchases','installments','payments','settings'].forEach(k => { if (!(k in parsed)) throw new Error(`JSON sem a chave ${k}`); }); state.data = parsed; saveToStorage(); document.documentElement.classList.toggle('light', state.data.settings.theme === 'light'); renderAll(); toast('Backup importado com sucesso.', 'success'); } catch(e) { toast('Arquivo inválido: ' + e.message, 'error'); } };
+    reader.readAsText(file);
+  }
+
+  function toast(message, type = 'success') { const el = document.createElement('div'); el.className = `toast ${type}`; el.textContent = message; $('#toastContainer').appendChild(el); setTimeout(()=>el.remove(), 3200); }
+
+  function bindEvents() {
+    $('#dashboardMonth').onchange = e => { state.filters.dashboard.month = Number(e.target.value); renderDashboard(); };
+    $('#dashboardYear').onchange = e => { state.filters.dashboard.year = Number(e.target.value); renderDashboard(); };
+    $('#dashboardCard').onchange = e => { state.filters.dashboard.cardId = e.target.value; renderDashboard(); };
+    $('#refreshDashboard').onclick = renderDashboard;
+    $$('[data-action="new-purchase"]').forEach(btn => btn.onclick = () => showPage('newPurchase'));
+    $('#addCardBtn').onclick = () => openCardModal(); $('#addPersonBtn').onclick = () => openPersonModal(); $('#addPaymentBtn').onclick = () => openPaymentModal(); $('#addMerchantBtn').onclick = () => openMerchantModal(); $('#addCategoryBtn').onclick = () => openCategoryModal();
+    $('#peopleMonth').onchange = e => { state.filters.people.month = Number(e.target.value); renderPeople(); };
+    $('#peopleYear').onchange = e => { state.filters.people.year = Number(e.target.value); renderPeople(); };
+    $('#closeModal').onclick = closeModal; $('#modalBackdrop').onclick = e => { if (e.target.id === 'modalBackdrop') closeModal(); };
+    $('#toggleThemeBtn').onclick = () => { state.data.settings.theme = state.data.settings.theme === 'dark' ? 'light' : 'dark'; document.documentElement.classList.toggle('light', state.data.settings.theme === 'light'); saveToStorage(); renderDashboard(); };
+    $('#exportBtn').onclick = exportData; $('#importBtn').onclick = () => $('#importInput').click(); $('#importInput').onchange = e => e.target.files[0] && importData(e.target.files[0]);
+    $('#clearDataBtn').onclick = () => { if (confirm('Isso apagará todos os dados locais. Deseja continuar?')) { localStorage.removeItem(STORAGE_KEY); state.data = { cards:[],people:[],categories:[],merchants:[],purchases:[],installments:[],payments:[],settings:{theme:'dark'} }; saveToStorage(false); renderAll(); toast('Todos os dados foram limpos.'); } };
+    $('#seedButton').onclick = () => { if (confirm('Substituir dados atuais por dados de exemplo?')) { state.data = defaultData(); saveToStorage(); renderAll(); } };
+    $('#openMobileMenu').onclick = () => $('#mobileDrawer').classList.add('show'); $('#closeMobileMenu').onclick = () => $('#mobileDrawer').classList.remove('show');
+  }
+
+  window.FinCard = {
+    editPurchase(id) { showPage('newPurchase'); renderPurchaseForm(getById(state.data.purchases, id)); }, deletePurchase,
+    setInstallmentStatus(id, status) { const i = getById(state.data.installments, id); if (i) { i.status = status; saveToStorage(); renderAll(); } },
+    showPurchaseDetails(id) { const p = getById(state.data.purchases, id); if (!p) return; openModal('Detalhes da compra', `<div class="full stack-list"><div class="stack-item"><strong>${escapeHTML(p.description)}</strong><b>${formatCurrency(p.total)}</b></div><p>Cartão: ${cardName(p.cardId)}<br>Categoria: ${categoryName(p.categoryId)}<br>Estabelecimento real: ${escapeHTML(p.merchantReal)}<br>Nome na fatura: ${escapeHTML(p.invoiceName)}<br>Tipo: ${p.type}<br>Pessoa: ${personName(p.personId)}<br>Observações: ${escapeHTML(p.notes || '-')}</p></div>`, () => {}); $('#modalForm .form-actions').remove(); },
+    personHistory(id) { const list = state.data.installments.filter(i => i.personId === id); const pays = paymentsFor(id); openModal(`Histórico de ${personName(id)}`, `<div class="full"><h3>Parcelas</h3>${table(list, ['Mês','Descrição','Valor que deve','Status'], i => [`${monthName(i.month)}/${i.year}`, escapeHTML(i.description), formatCurrency(i.otherAmount), statusBadge(i.status)])}<h3>Pagamentos</h3>${table(pays, ['Data','Valor','Forma','Referência'], p => [formatDate(p.date), formatCurrency(p.amount), p.method, `${monthName(p.month)}/${p.year}`])}</div>`, () => {}); $('#modalForm .form-actions').remove(); },
+    openCardModal, openPersonModal, openCategoryModal, openMerchantModal, openPaymentModal, deleteItem
+  };
+
+  function init() { loadFromStorage(); renderNav(); bindEvents(); renderPurchaseForm(); renderAll(); }
+  init();
+})();
