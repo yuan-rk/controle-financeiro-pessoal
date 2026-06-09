@@ -7,10 +7,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="YR Finanças" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="manifest" href="manifest.json?v=21" />
-  <link rel="apple-touch-icon" href="icon-192.png?v=21" />
+  <link rel="manifest" href="manifest.json?v=23" />
+  <link rel="apple-touch-icon" href="icon-192.png?v=23" />
   <title>YR Finanças | Controle Financeiro Pessoal</title>
-  <link rel="icon" type="image/png" href="icon-192.png?v=21" />
+  <link rel="icon" type="image/png" href="icon-192.png?v=23" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -20,7 +20,7 @@
   <div class="app-shell">
     <aside class="sidebar" aria-label="Menu principal">
       <div class="brand">
-        <div class="brand-logo"><img src="icon-192.png?v=21" alt="Logo YR Finanças"></div>
+        <div class="brand-logo"><img src="icon-192.png?v=23" alt="Logo YR Finanças"></div>
         <div>
           <strong>YR Finanças</strong>
           <span>controle de faturas</span>
@@ -63,7 +63,7 @@
           <div class="panel-header overview-title">
             <div>
               <h2>Visão geral financeira</h2>
-              <span class="muted">Acompanhe suas contas, formas de pagamento e resumo financeiro do mês.</span>
+              <span class="muted">Acompanhe sua receita estimada, seus gastos e quanto pagará em cada cartão.</span>
             </div>
           </div>
 
@@ -80,8 +80,8 @@
               <div class="overview-totals" id="overviewTotals"></div>
 
               <div class="overview-list-head">
-                <h3>Minhas contas</h3>
-                <span class="muted">Saldos manuais e entradas do mês</span>
+                <h3>Estimativa do mês</h3>
+                <span class="muted">Receita, gastos e saldo previsto</span>
               </div>
               <div id="overviewAccounts" class="overview-list"></div>
             </article>
@@ -89,8 +89,8 @@
             <aside class="overview-side">
               <article class="panel active-accounts-card">
                 <div class="panel-header compact">
-                  <h3>Contas ativas</h3>
-                  <span class="muted">manual</span>
+                  <h3>Resumo rápido</h3>
+                  <span class="muted">estimativa</span>
                 </div>
                 <div id="overviewAccountChips" class="account-chip-grid"></div>
               </article>

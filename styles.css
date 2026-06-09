@@ -2119,3 +2119,48 @@ body.auth-mode .auth-card{
   inset:0;
   z-index:10000;
 }
+
+
+
+/* v22: remover definitivamente qualquer botão flutuante de menu no mobile/tablet */
+.side-toggle-btn,
+#sideToggleBtn,
+.mobile-menu-btn,
+#mobileMenuBtn,
+.menu-toggle,
+#menuToggle,
+button[aria-label="Abrir menu"],
+button[aria-label="Menu"],
+button[aria-label="Abrir navegação"],
+.sidebar-backdrop,
+#sidebarBackdrop{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+  width:0!important;
+  height:0!important;
+  min-width:0!important;
+  min-height:0!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  overflow:hidden!important;
+}
+
+
+
+/* v23: resumo rápido em vez de contas manuais */
+.overview-list-head h3::after{
+  content:"";
+}
+.active-accounts-card .panel-header.compact h3{
+  font-size:1.02rem;
+}
+.overview-row-left div strong,
+.account-chip strong{
+  letter-spacing:-.01em;
+}
+.overview-row-value small{
+  color:var(--muted)!important;
+}

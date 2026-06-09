@@ -52,8 +52,9 @@
 
   function defaultData() {
     const cards = [
-      { id: uid('card'), name: 'Nubank Platinum', bank: 'Nubank', nickname: 'Roxinho', last4: '1234', brand: 'Mastercard', type: 'Crédito', closeDay: 3, dueDay: 10, bestDay: 4, limit: 4500, color: '#6366F1', status: 'Ativo', notes: 'Cartão principal' },
-      { id: uid('card'), name: 'Inter Gold', bank: 'Banco Inter', nickname: 'Inter', last4: '9876', brand: 'Visa', type: 'Crédito e Débito', closeDay: 15, dueDay: 22, bestDay: 16, limit: 3000, color: '#F59E0B', status: 'Ativo', notes: '' }
+      { id: uid('card'), name: 'Nubank', bank: 'Nubank', nickname: 'Nubank', last4: '', brand: 'Mastercard', type: 'Crédito', closeDay: 3, dueDay: 10, bestDay: 4, limit: 4500, color: '#7C3AED', status: 'Ativo', notes: 'Cartão principal' },
+      { id: uid('card'), name: 'PicPay Card', bank: 'PicPay', nickname: 'PicPay', last4: '', brand: 'Mastercard', type: 'Crédito', closeDay: 8, dueDay: 15, bestDay: 9, limit: 3000, color: '#22C55E', status: 'Ativo', notes: '' },
+      { id: uid('card'), name: 'Mercado Livre', bank: 'Mercado Pago', nickname: 'Mercado Livre', last4: '', brand: 'Visa', type: 'Crédito', closeDay: 12, dueDay: 20, bestDay: 13, limit: 2500, color: '#FACC15', status: 'Ativo', notes: '' }
     ];
     const defaultCategories = [
       'Alimentação', 'Mercado', 'Restaurante / Lanche', 'Transporte', 'Combustível',
@@ -420,11 +421,15 @@
       const cards = Array.isArray(state.data.cards) ? state.data.cards : [];
       const firstCard = cards[0];
       const secondCard = cards[1];
+      const totalInvoice = expense;
+      const myExpense = money(t?.mine || 0);
+      const othersPending = money(t?.pending || 0);
+
       const accountData = [
-        ['Conta principal', 'Recebimentos e saldo estimado', income || 0, '💠', '#6366F1'],
-        ['Pix / Conta principal', 'Conta manual', Math.max(0, balance), '◇', '#14B8A6'],
-        ['Carteira', 'Saldo manual estimado', Math.max(0, balance), '💵', '#22C55E'],
-        ['Fatura do mês', 'Total filtrado no dashboard', -expense, '💳', '#6366F1']
+        ['Receita estimada', 'Entradas registradas no mês', income || 0, '📈', '#22C55E'],
+        ['Gastos estimados', 'Sua parte + faturas do mês', myExpense || totalInvoice, '📉', '#EF4444'],
+        ['Saldo após pagar tudo', 'Receita menos seus gastos', income - (myExpense || totalInvoice), '💰', '#06B6D4'],
+        ['Fatura do mês', 'Total em cartões e compras', -totalInvoice, '💳', '#6366F1']
       ];
 
       const accounts = $('#overviewAccounts');
@@ -460,7 +465,7 @@
           cardsBox.innerHTML = `
             <div class="empty-state compact-empty">
               <strong>Nenhum cartão cadastrado</strong>
-              <span>Adicione uma forma de pagamento para acompanhar faturas aqui.</span>
+              <span>Cadastre seus cartões, como Nubank, PicPay e Mercado Livre, para acompanhar quanto pagará em cada um.</span>
             </div>
           `;
         } else {
@@ -478,8 +483,8 @@
                   <strong>${escapeHTML(card.nickname || card.name)}</strong>
                   <span>${escapeHTML(card.type || 'Crédito')}</span>
                   <div class="overview-card-metrics">
+                    <small>Valor a pagar<br><b class="${invoice > 0 ? 'danger-text' : ''}">${formatCurrency(invoice)}</b></small>
                     <small>Limite disponível<br><b>${limit ? formatCurrency(available) : 'Sem limite'}</b></small>
-                    <small>Fatura atual<br><b class="${invoice > 0 ? 'danger-text' : ''}">${formatCurrency(invoice)}</b></small>
                   </div>
                 </div>
                 <div class="overview-card-actions">
@@ -745,7 +750,7 @@
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=21" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=23" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -979,7 +984,7 @@
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=21').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=23').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
