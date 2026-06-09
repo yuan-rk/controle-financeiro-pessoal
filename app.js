@@ -731,7 +731,7 @@
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=17" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=19" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -878,8 +878,8 @@
       const open = force === null ? !document.body.classList.contains('sidebar-open') : force;
       document.body.classList.toggle('sidebar-open', open);
     };
-    $('#sideToggleBtn') && ($('#sideToggleBtn').onclick = () => toggleSidebarMobile());
-    $('#sidebarBackdrop') && ($('#sidebarBackdrop').onclick = () => toggleSidebarMobile(false));
+    
+    
     $('#dashboardMonth').onchange = e => { state.filters.dashboard.month = Number(e.target.value); renderDashboard(); };
     $('#dashboardYear').onchange = e => { state.filters.dashboard.year = Number(e.target.value); renderDashboard(); };
     $('#dashboardCard').onchange = e => { state.filters.dashboard.cardId = e.target.value; renderDashboard(); };
@@ -963,7 +963,7 @@
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=17').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=19').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
