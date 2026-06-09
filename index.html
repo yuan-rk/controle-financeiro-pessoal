@@ -7,10 +7,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="YR Finanças" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="manifest" href="manifest.json?v=23" />
-  <link rel="apple-touch-icon" href="icon-192.png?v=23" />
+  <link rel="manifest" href="manifest.json?v=25" />
+  <link rel="apple-touch-icon" href="icon-192.png?v=25" />
   <title>YR Finanças | Controle Financeiro Pessoal</title>
-  <link rel="icon" type="image/png" href="icon-192.png?v=23" />
+  <link rel="icon" type="image/png" href="icon-192.png?v=25" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -20,7 +20,7 @@
   <div class="app-shell">
     <aside class="sidebar" aria-label="Menu principal">
       <div class="brand">
-        <div class="brand-logo"><img src="icon-192.png?v=23" alt="Logo YR Finanças"></div>
+        <div class="brand-logo"><img src="icon-192.png?v=25" alt="Logo YR Finanças"></div>
         <div>
           <strong>YR Finanças</strong>
           <span>controle de faturas</span>
@@ -191,6 +191,15 @@
       <section class="page" id="settingsPage">
         <div class="section-head"><div><h2>Configurações</h2><p>Backup, importação, tema e gerenciamento dos dados locais.</p></div></div>
         <div class="settings-grid">
+        <div class="settings-card">
+          <h3>Relatório mensal</h3>
+          <p>Gere um relatório completo do mês selecionado no Dashboard para enviar ao ChatGPT e receber um plano de economia.</p>
+          <div class="settings-actions">
+            <button class="primary-button" id="monthlyReportBtn">Baixar relatório do mês</button>
+            <button class="secondary-button" id="copyMonthlyReportBtn">Copiar relatório</button>
+          </div>
+        </div>
+
           <article class="panel"><h3>Tema</h3><p class="muted">Alterne entre claro e escuro.</p><button class="secondary-button" id="toggleThemeBtn">Alternar tema</button></article>
           <article class="panel"><h3>Backup</h3><p class="muted">Exporte um arquivo JSON com todos os dados.</p><button class="primary-button" id="exportBtn">Exportar JSON</button></article>
           <article class="panel"><h3>Restaurar</h3><p class="muted">Importe um JSON exportado anteriormente.</p><input type="file" id="importInput" accept="application/json" hidden><button class="secondary-button" id="importBtn">Importar JSON</button></article>

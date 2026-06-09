@@ -116,6 +116,105 @@
     return method;
   }
 
+  function institutionPreset(card = {}) {
+    const text = `${card.name || ''} ${card.bank || ''} ${card.nickname || ''}`.toLowerCase();
+
+    const presets = [
+      {
+        match: ['nubank', 'nu bank', 'roxinho', 'nu '],
+        key: 'nubank',
+        label: 'Nu',
+        color: '#7C3AED',
+        color2: '#A855F7',
+        textColor: '#FFFFFF'
+      },
+      {
+        match: ['picpay', 'pic pay'],
+        key: 'picpay',
+        label: 'P',
+        color: '#22C55E',
+        color2: '#16A34A',
+        textColor: '#FFFFFF'
+      },
+      {
+        match: ['mercado livre', 'mercado pago', 'mercadopago', 'meli'],
+        key: 'mercado',
+        label: 'ML',
+        color: '#FACC15',
+        color2: '#2563EB',
+        textColor: '#0F172A'
+      },
+      {
+        match: ['inter', 'banco inter'],
+        key: 'inter',
+        label: 'Inter',
+        color: '#F97316',
+        color2: '#FB923C',
+        textColor: '#FFFFFF'
+      },
+      {
+        match: ['caixa'],
+        key: 'caixa',
+        label: 'CX',
+        color: '#2563EB',
+        color2: '#F59E0B',
+        textColor: '#FFFFFF'
+      },
+      {
+        match: ['santander'],
+        key: 'santander',
+        label: 'S',
+        color: '#EF4444',
+        color2: '#B91C1C',
+        textColor: '#FFFFFF'
+      },
+      {
+        match: ['bradesco'],
+        key: 'bradesco',
+        label: 'B',
+        color: '#DC2626',
+        color2: '#991B1B',
+        textColor: '#FFFFFF'
+      },
+      {
+        match: ['itaú', 'itau'],
+        key: 'itau',
+        label: 'Itaú',
+        color: '#F97316',
+        color2: '#1D4ED8',
+        textColor: '#FFFFFF'
+      },
+      {
+        match: ['bb', 'banco do brasil'],
+        key: 'bb',
+        label: 'BB',
+        color: '#FACC15',
+        color2: '#1D4ED8',
+        textColor: '#0F172A'
+      }
+    ];
+
+    return presets.find(p => p.match.some(term => text.includes(term))) || {
+      key: 'default',
+      label: (card.nickname || card.name || card.bank || 'YR').slice(0, 2).toUpperCase(),
+      color: card.color || '#6366F1',
+      color2: '#06B6D4',
+      textColor: '#FFFFFF'
+    };
+  }
+
+  function institutionBadge(card = {}, size = 'md') {
+    const preset = institutionPreset(card);
+    return `<span class="institution-badge ${size}" style="--inst-color:${preset.color};--inst-color-2:${preset.color2};--inst-text:${preset.textColor};">${escapeHTML(preset.label)}</span>`;
+  }
+
+  function applyInstitutionColor(card = {}) {
+    const preset = institutionPreset(card);
+    if (preset.key !== 'default') card.color = preset.color;
+    return card;
+  }
+
+
   function paymentFilterOptions(includeAll = false) {
     const methods = ['Pix', 'Dinheiro', 'Boleto', 'Crediário', 'Transferência', 'Outro'];
     const cards = state.data.cards.map(c => `<option value="card:${c.id}">${escapeHTML(c.nickname || c.name)} ${c.last4 ? '••' + c.last4 : ''}</option>`).join('');
@@ -476,8 +575,8 @@
             const closeText = card.closeDay ? `Fecha dia ${card.closeDay}` : 'Fatura manual';
             return `
               <div class="overview-card-item">
-                <div class="mini-card-preview" style="--card-color:${card.color || '#6366F1'}">
-                  <span>${escapeHTML((card.nickname || card.name || 'YR').slice(0, 2))}</span>
+                <div class="mini-card-preview" style="--card-color:${institutionPreset(card).color};--card-color-2:${institutionPreset(card).color2}">
+                  ${institutionBadge(card, 'lg')}
                 </div>
                 <div class="overview-card-info">
                   <strong>${escapeHTML(card.nickname || card.name)}</strong>
@@ -654,7 +753,7 @@
   function table(list, headers, rowFn) { if (!list.length) return emptyHTML(); return `<div class="table-wrap"><table class="data-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${list.map(item=>`<tr>${rowFn(item).map(cell=>`<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`; }
 
   function renderCards() {
-    $('#cardsGrid').innerHTML = state.data.cards.length ? state.data.cards.map(c => `<article class="credit-card" style="--card-color:${c.color || '#6366F1'}"><div class="card-top"><div><h3>${escapeHTML(c.nickname || c.name)}</h3><p>${escapeHTML(c.bank)} • ${escapeHTML(c.brand)}</p></div>${statusBadge(c.status)}</div><p>•••• ${escapeHTML(c.last4 || '----')} • ${escapeHTML(c.type)}</p><p>Fecha dia ${c.closeDay} • vence dia ${c.dueDay} • melhor dia ${c.bestDay}</p><div class="limit"><strong>${c.limit ? formatCurrency(c.limit) : 'Sem limite informado'}</strong><div class="actions"><button class="mini-btn" onclick="FinCard.openCardModal('${c.id}')">Editar</button><button class="mini-btn" onclick="FinCard.deleteItem('cards','${c.id}')">Excluir</button></div></div></article>`).join('') : emptyHTML();
+    $('#cardsGrid').innerHTML = state.data.cards.length ? state.data.cards.map(c => `<article class="credit-card" style="--card-color:${c.color || '#6366F1'}"><div class="card-top"><div class="card-title-wrap">${institutionBadge(c)}<div><h3>${escapeHTML(c.nickname || c.name)}</h3><p>${escapeHTML(c.bank)} • ${escapeHTML(c.brand)}</p></div></div>${statusBadge(c.status)}</div><p>•••• ${escapeHTML(c.last4 || '----')} • ${escapeHTML(c.type)}</p><p>Fecha dia ${c.closeDay} • vence dia ${c.dueDay} • melhor dia ${c.bestDay}</p><div class="limit"><strong>${c.limit ? formatCurrency(c.limit) : 'Sem limite informado'}</strong><div class="actions"><button class="mini-btn" onclick="FinCard.openCardModal('${c.id}')">Editar</button><button class="mini-btn" onclick="FinCard.deleteItem('cards','${c.id}')">Excluir</button></div></div></article>`).join('') : emptyHTML();
   }
 
   function renderPeople() {
@@ -697,7 +796,7 @@
 
   function openCardModal(id) {
     const c = getById(state.data.cards,id) || { name:'', bank:'', nickname:'', last4:'', brand:'Visa', type:'Crédito', closeDay:1, dueDay:10, bestDay:2, limit:'', color:'#6366F1', status:'Ativo', notes:'' };
-    openModal(id ? 'Editar forma de pagamento' : 'Nova forma de pagamento', `${field('Nome da forma','name','text',c.name,'','required')}${field('Banco, instituição ou descrição','bank','text',c.bank)}${field('Apelido','nickname','text',c.nickname)}${field('Últimos 4 dígitos','last4','text',c.last4)}<label class="field">Bandeira<select name="brand">${['Visa','Mastercard','Elo','Hipercard','American Express','Outro'].map(x=>`<option ${c.brand===x?'selected':''}>${x}</option>`).join('')}</select></label><label class="field">Tipo<select name="type">${['Crédito','Débito','Crédito e Débito','Pix','Dinheiro','Boleto','Crediário','Transferência','Outro'].map(x=>`<option ${c.type===x?'selected':''}>${x}</option>`).join('')}</select></label>${field('Fechamento','closeDay','number',c.closeDay,'','min="1" max="31"')}${field('Vencimento','dueDay','number',c.dueDay,'','min="1" max="31"')}${field('Melhor dia','bestDay','number',c.bestDay,'','min="1" max="31"')}${field('Limite','limit','number',c.limit,'','step="0.01"')}${field('Cor','color','color',c.color)}<label class="field">Status<select name="status"><option ${c.status==='Ativo'?'selected':''}>Ativo</option><option ${c.status==='Inativo'?'selected':''}>Inativo</option></select></label><label class="field full">Observações<textarea name="notes">${escapeHTML(c.notes || '')}</textarea></label>`, values => upsert('cards', { ...c, ...values, id: id || uid('card'), limit: money(values.limit) }));
+    openModal(id ? 'Editar forma de pagamento' : 'Nova forma de pagamento', `${field('Nome da forma','name','text',c.name,'','required')}${field('Banco, instituição ou descrição','bank','text',c.bank)}${field('Apelido','nickname','text',c.nickname)}${field('Últimos 4 dígitos','last4','text',c.last4)}<label class="field">Bandeira<select name="brand">${['Visa','Mastercard','Elo','Hipercard','American Express','Outro'].map(x=>`<option ${c.brand===x?'selected':''}>${x}</option>`).join('')}</select></label><label class="field">Tipo<select name="type">${['Crédito','Débito','Crédito e Débito','Pix','Dinheiro','Boleto','Crediário','Transferência','Outro'].map(x=>`<option ${c.type===x?'selected':''}>${x}</option>`).join('')}</select></label>${field('Fechamento','closeDay','number',c.closeDay,'','min="1" max="31"')}${field('Vencimento','dueDay','number',c.dueDay,'','min="1" max="31"')}${field('Melhor dia','bestDay','number',c.bestDay,'','min="1" max="31"')}${field('Limite','limit','number',c.limit,'','step="0.01"')}${field('Cor','color','color',c.color)}<div class="field helper-note"><span>O sistema tenta reconhecer Nubank, PicPay, Mercado Livre e outros bancos para sugerir cor e badge automaticamente.</span></div><label class="field">Status<select name="status"><option ${c.status==='Ativo'?'selected':''}>Ativo</option><option ${c.status==='Inativo'?'selected':''}>Inativo</option></select></label><label class="field full">Observações<textarea name="notes">${escapeHTML(c.notes || '')}</textarea></label>`, values => upsert('cards', applyInstitutionColor({ ...c, ...values, id: id || uid('card'), limit: money(values.limit) })));
   }
 
   function openPersonModal(id) { const p = getById(state.data.people,id) || { name:'', phone:'', notes:'' }; openModal(id?'Editar pessoa':'Nova pessoa', `${field('Nome','name','text',p.name,'','required')}${field('Telefone','phone','text',p.phone)}<label class="field full">Observações<textarea name="notes">${escapeHTML(p.notes || '')}</textarea></label>`, v => upsert('people',{...p,...v,id:id||uid('person')})); }
@@ -707,6 +806,159 @@
 
   function upsert(list, item) { state.data[list] = state.data[list].filter(x => x.id !== item.id); state.data[list].push(item); }
   function deleteItem(list, id) { if (!confirm('Tem certeza que deseja excluir este item?')) return; state.data[list] = state.data[list].filter(x => x.id !== id); saveToStorage(); renderAll(); }
+
+
+  function generateMonthlyReport() {
+    const month = Number(state.filters.dashboard.month || currentMonth);
+    const year = Number(state.filters.dashboard.year || currentYear);
+    const installments = filterByMonthYear(state.data.installments, month, year);
+    const purchasesIds = new Set(installments.map(i => i.purchaseId));
+    const purchases = state.data.purchases.filter(p => purchasesIds.has(p.id));
+    const payments = state.data.payments.filter(p => Number(p.month) === month && Number(p.year) === year);
+
+    const totalInvoice = installments.reduce((s, i) => s + money(i.amount), 0);
+    const myTotal = installments.reduce((s, i) => s + money(i.myAmount), 0);
+    const othersTotal = installments.reduce((s, i) => s + money(i.otherAmount), 0);
+    const received = payments.reduce((s, p) => s + money(p.amount), 0);
+    const pending = Math.max(0, othersTotal - received);
+    const estimatedBalance = received - myTotal;
+
+    const sumBy = (items, keyFn, valueFn) => {
+      const out = {};
+      items.forEach(item => {
+        const key = keyFn(item) || 'Não informado';
+        out[key] = (out[key] || 0) + money(valueFn(item));
+      });
+      return Object.entries(out).sort((a,b) => b[1] - a[1]);
+    };
+
+    const byCategory = sumBy(installments, i => categoryName(i.categoryId), i => i.amount);
+    const byCard = sumBy(installments.filter(i => i.cardId), i => cardName(i.cardId), i => i.amount);
+    const byPerson = state.data.people
+      .map(p => {
+        const debt = getPersonDebt(p.id, month, year);
+        return [p.name, debt.total, debt.paid, debt.pending];
+      })
+      .filter(row => row[1] > 0 || row[2] > 0 || row[3] > 0)
+      .sort((a,b) => b[3] - a[3]);
+
+    const moneyLine = (label, value) => `- ${label}: ${formatCurrency(value)}`;
+    const tableLines = (rows, headers) => {
+      if (!rows.length) return '_Sem dados neste mês._';
+      const head = `| ${headers.join(' | ')} |`;
+      const sep = `| ${headers.map(() => '---').join(' | ')} |`;
+      const body = rows.map(row => `| ${row.map(cell => String(cell).replace(/\|/g, '/')).join(' | ')} |`).join('\n');
+      return `${head}\n${sep}\n${body}`;
+    };
+
+    const report = `# Relatório financeiro mensal — ${monthName(month)} de ${year}
+
+## Resumo geral
+
+${moneyLine('Receita/recebimentos registrados', received)}
+${moneyLine('Total da fatura/saídas do mês', totalInvoice)}
+${moneyLine('Minha parte dos gastos', myTotal)}
+${moneyLine('Valor que terceiros me devem', othersTotal)}
+${moneyLine('Já recebido de terceiros', received)}
+${moneyLine('Pendente a receber', pending)}
+${moneyLine('Saldo estimado após pagar minha parte', estimatedBalance)}
+
+## Indicadores
+
+- Compras no mês: ${purchases.length}
+- Parcelas no mês: ${installments.length}
+- Cartões/formas com gasto: ${byCard.length}
+- Categorias usadas: ${byCategory.length}
+
+## Gastos por categoria
+
+${tableLines(byCategory.map(([name, value]) => [name, formatCurrency(value)]), ['Categoria', 'Valor'])}
+
+## Valor a pagar por cartão
+
+${tableLines(byCard.map(([name, value]) => [name, formatCurrency(value)]), ['Cartão', 'Valor do mês'])}
+
+## Pessoas / valores de terceiros
+
+${tableLines(byPerson.map(([name, total, paid, open]) => [name, formatCurrency(total), formatCurrency(paid), formatCurrency(open)]), ['Pessoa', 'Total', 'Recebido', 'Pendente'])}
+
+## Compras do mês
+
+${tableLines(purchases.map(p => [
+  formatDate(p.date),
+  p.description,
+  paymentName(p),
+  categoryName(p.categoryId),
+  p.type,
+  formatCurrency(p.total)
+]), ['Data', 'Descrição', 'Forma', 'Categoria', 'Tipo', 'Valor'])}
+
+## Parcelas do mês
+
+${tableLines(installments.map(i => [
+  i.label,
+  i.description,
+  paymentName(i),
+  categoryName(i.categoryId),
+  formatCurrency(i.amount),
+  statusBadgeText(i.status)
+]), ['Parcela', 'Descrição', 'Forma', 'Categoria', 'Valor', 'Status'])}
+
+## Pagamentos recebidos
+
+${tableLines(payments.map(p => [
+  formatDate(p.date),
+  personName(p.personId),
+  p.method,
+  formatCurrency(p.amount),
+  p.notes || '-'
+]), ['Data', 'Pessoa', 'Forma', 'Valor', 'Observações'])}
+
+## Pedido para análise no ChatGPT
+
+Analise este relatório financeiro e monte um plano econômico para mim. Quero sugestões práticas para economizar mais, gastar menos, identificar categorias problemáticas, organizar pagamentos de cartão e criar metas realistas para o próximo mês.
+`;
+
+    return report;
+  }
+
+  function statusBadgeText(status) {
+    return String(status || '').replace(/\|/g, '/');
+  }
+
+  function downloadMonthlyReport() {
+    const report = generateMonthlyReport();
+    const month = Number(state.filters.dashboard.month || currentMonth);
+    const year = Number(state.filters.dashboard.year || currentYear);
+    const blob = new Blob([report], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `relatorio-yr-financas-${year}-${String(month).padStart(2,'0')}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('Relatório mensal baixado.', 'success');
+  }
+
+  async function copyMonthlyReport() {
+    const report = generateMonthlyReport();
+    try {
+      await navigator.clipboard.writeText(report);
+      toast('Relatório copiado. Agora é só colar no ChatGPT.', 'success');
+    } catch (err) {
+      const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const month = Number(state.filters.dashboard.month || currentMonth);
+      const year = Number(state.filters.dashboard.year || currentYear);
+      a.href = url;
+      a.download = `relatorio-yr-financas-${year}-${String(month).padStart(2,'0')}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('Não foi possível copiar; baixei o relatório em TXT.', 'error');
+    }
+  }
+
 
   function exportData() {
     const blob = new Blob([JSON.stringify(state.data, null, 2)], { type: 'application/json' });
@@ -750,7 +1002,7 @@
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=23" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=25" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -909,6 +1161,7 @@
     $('#peopleYear').onchange = e => { state.filters.people.year = Number(e.target.value); renderPeople(); };
     $('#closeModal').onclick = closeModal; $('#modalBackdrop').onclick = e => { if (e.target.id === 'modalBackdrop') closeModal(); };
     $('#toggleThemeBtn').onclick = () => { state.data.settings.theme = state.data.settings.theme === 'dark' ? 'light' : 'dark'; document.documentElement.classList.toggle('light', state.data.settings.theme === 'light'); saveToStorage(); renderDashboard(); };
+    $('#monthlyReportBtn') && ($('#monthlyReportBtn').onclick = downloadMonthlyReport); $('#copyMonthlyReportBtn') && ($('#copyMonthlyReportBtn').onclick = copyMonthlyReport);
     $('#exportBtn').onclick = exportData; $('#importBtn').onclick = () => $('#importInput').click(); $('#importInput').onchange = e => e.target.files[0] && importData(e.target.files[0]);
     $('#syncNowBtn').onclick = () => saveToSupabase(true, true); $('#logoutBtn').onclick = signOut;
     $('#clearDataBtn').onclick = () => { if (confirm('Isso apagará todos os dados deste navegador e da sua conta na nuvem. Deseja continuar?')) { localStorage.removeItem(STORAGE_KEY); state.data = { cards:[],people:[],categories:[],merchants:[],purchases:[],installments:[],payments:[],settings:{theme:'dark'} }; saveToStorage(false); renderAll(); toast('Todos os dados foram limpos.'); } };
@@ -984,7 +1237,7 @@
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=23').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=25').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });

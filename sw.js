@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yr-financas-v23';
+const CACHE_NAME = 'yr-financas-v25';
 const APP_SHELL = [
   './',
   './index.html',
@@ -7,8 +7,8 @@ const APP_SHELL = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './icon-192.png?v=23',
-  './icon-512.png?v=23'
+  './icon-192.png?v=25',
+  './icon-512.png?v=25'
 ];
 
 self.addEventListener('install', event => {
