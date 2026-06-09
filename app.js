@@ -344,6 +344,7 @@
     $(`#${page}Page`).classList.add('active');
     $('#pageTitle').textContent = menu.find(m => m[0] === page)?.[2] || 'YR Finanças';
     $('#mobileDrawer').classList.remove('show');
+    document.body.classList.remove('sidebar-open');
     renderNav();
     renderAll(false);
   }
@@ -411,9 +412,16 @@
       const firstCard = cards[0];
       const secondCard = cards[1];
 
+      const cleanAccountName = (card, fallback) => {
+        if (!card) return fallback;
+        const raw = String(card.nickname || card.name || '').trim();
+        if (!raw || raw.length > 24 || raw.split(' ').length > 3) return fallback;
+        return raw;
+      };
+
       const accountData = [
-        [firstCard ? `Conta ${firstCard.nickname || firstCard.name}` : 'Conta principal', firstCard ? 'Forma cadastrada' : 'Recebimentos registrados', income || 0, '💠', firstCard?.color || '#06B6D4'],
-        [secondCard ? `Conta ${secondCard.nickname || secondCard.name}` : 'Pix / Conta principal', secondCard ? 'Forma cadastrada' : 'Conta manual', Math.max(0, balance), '◇', secondCard?.color || '#14B8A6'],
+        [cleanAccountName(firstCard, 'Conta principal'), firstCard ? 'Forma cadastrada' : 'Recebimentos registrados', income || 0, '💠', firstCard?.color || '#06B6D4'],
+        [cleanAccountName(secondCard, 'Pix / Conta principal'), secondCard ? 'Forma cadastrada' : 'Conta manual', Math.max(0, balance), '◇', secondCard?.color || '#14B8A6'],
         ['Carteira', 'Saldo manual estimado', Math.max(0, balance), '💵', '#22C55E'],
         ['Fatura do mês', 'Total filtrado no dashboard', -expense, '💳', '#6366F1']
       ];
@@ -731,7 +739,7 @@
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=9" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=11" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -873,6 +881,13 @@
   }
 
   function bindEvents() {
+
+    const toggleSidebarMobile = (force = null) => {
+      const open = force === null ? !document.body.classList.contains('sidebar-open') : force;
+      document.body.classList.toggle('sidebar-open', open);
+    };
+    $('#sideToggleBtn') && ($('#sideToggleBtn').onclick = () => toggleSidebarMobile());
+    $('#sidebarBackdrop') && ($('#sidebarBackdrop').onclick = () => toggleSidebarMobile(false));
     $('#dashboardMonth').onchange = e => { state.filters.dashboard.month = Number(e.target.value); renderDashboard(); };
     $('#dashboardYear').onchange = e => { state.filters.dashboard.year = Number(e.target.value); renderDashboard(); };
     $('#dashboardCard').onchange = e => { state.filters.dashboard.cardId = e.target.value; renderDashboard(); };
@@ -888,6 +903,7 @@
     $('#clearDataBtn').onclick = () => { if (confirm('Isso apagará todos os dados deste navegador e da sua conta na nuvem. Deseja continuar?')) { localStorage.removeItem(STORAGE_KEY); state.data = { cards:[],people:[],categories:[],merchants:[],purchases:[],installments:[],payments:[],settings:{theme:'dark'} }; saveToStorage(false); renderAll(); toast('Todos os dados foram limpos.'); } };
     $('#seedButton').onclick = () => { if (confirm('Substituir dados atuais por dados de exemplo?')) { state.data = defaultData(); saveToStorage(); renderAll(); } };
     $('#openMobileMenu').onclick = () => $('#mobileDrawer').classList.add('show'); $('#closeMobileMenu').onclick = () => $('#mobileDrawer').classList.remove('show');
+    document.body.classList.remove('sidebar-open');
   }
 
   window.FinCard = {
@@ -955,7 +971,7 @@
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=9').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=11').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
