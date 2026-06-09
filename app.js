@@ -1,4 +1,4 @@
-/* FinCard Pro - controle de faturas com sincronização opcional em nuvem.
+/* YR Finanças - controle de faturas com sincronização opcional em nuvem.
    O sistema usa Supabase para login e banco online. O LocalStorage continua
    como cache/backup local para melhorar a experiência e facilitar migração. */
 (() => {
@@ -259,7 +259,7 @@
     state.currentPage = page;
     $$('.page').forEach(p => p.classList.remove('active'));
     $(`#${page}Page`).classList.add('active');
-    $('#pageTitle').textContent = menu.find(m => m[0] === page)?.[2] || 'FinCard Pro';
+    $('#pageTitle').textContent = menu.find(m => m[0] === page)?.[2] || 'YR Finanças';
     $('#mobileDrawer').classList.remove('show');
     renderNav();
     renderAll(false);
@@ -481,7 +481,7 @@
   function exportData() {
     const blob = new Blob([JSON.stringify(state.data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob); const a = document.createElement('a');
-    a.href = url; a.download = `backup-fincard-pro-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
+    a.href = url; a.download = `backup-yr-financas-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
   }
   function importData(file) {
     const reader = new FileReader();
@@ -515,7 +515,7 @@
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo">F</div><div><strong>FinCard Pro</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icons/icon-192.png?v=5" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -729,7 +729,7 @@
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=4').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=5').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });

@@ -1,4 +1,4 @@
-# FinCard Pro — Controle financeiro pessoal
+# YR Finanças — Controle financeiro pessoal
 
 Sistema web estático para controle de faturas de cartão, compras parceladas, compras de terceiros, devedores, recebimentos, cartões, estabelecimentos e categorias.
 
@@ -64,4 +64,4 @@ Como o projeto é HTML, CSS e JavaScript puro, pode ser hospedado em qualquer ho
 
 ## PWA
 
-Esta versão inclui manifest.json, sw.js e ícones para instalação na tela inicial do celular. Após subir ao GitHub Pages, acesse com ?v=4 e limpe/cache se necessário.
+Esta versão inclui manifest.json, sw.js e ícones para instalação na tela inicial do celular. Após subir ao GitHub Pages, acesse com ?v=5 e limpe/cache se necessário.

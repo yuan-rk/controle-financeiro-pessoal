@@ -1,12 +1,12 @@
-const CACHE_NAME = 'fincard-pro-v4';
+const CACHE_NAME = 'yr-financas-v5';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
   './app.js',
   './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/icon-192.png?v=5',
+  './icons/icon-512.png?v=5'
 ];
 
 self.addEventListener('install', event => {
