@@ -377,7 +377,114 @@
       ['Parcelas ativas', t.activeInstallments, 'Parcelas na fatura filtrada', 'rgba(6,182,212,.75)', false], ['Formas ativas', t.activeCards, 'Formas de pagamento disponíveis', 'rgba(34,197,94,.75)', false]
     ];
     $('#dashboardMetrics').innerHTML = metrics.map(m => `<div class="metric-card" style="--accent:${m[3]}"><span>${m[0]}</span><strong>${m[4] === false ? m[1] : formatCurrency(m[1])}</strong><small>${m[2]}</small></div>`).join('');
-    renderRankings(t.installments); updateCharts(t);
+    renderFinancialOverview(t); renderRankings(t.installments); updateCharts(t);
+  }
+
+
+  function renderFinancialOverview(t) {
+    try {
+      const hour = new Date().getHours();
+      const greet = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+      const greeting = $('#overviewGreeting');
+      if (greeting) greeting.textContent = `${greet}, Yuan! 👋`;
+
+      const selectedMonth = Number(state.filters.dashboard.month);
+      const selectedYear = Number(state.filters.dashboard.year);
+
+      const income = (state.data.payments || [])
+        .filter(p => Number(p.month) === selectedMonth && Number(p.year) === selectedYear)
+        .reduce((sum, p) => sum + money(p.amount), 0);
+
+      const expense = money(t?.totalInvoice || 0);
+      const balance = income - expense;
+
+      const totals = $('#overviewTotals');
+      if (totals) {
+        totals.innerHTML = `
+          <div><span>Receita mensal</span><strong class="positive">${formatCurrency(income)}</strong><small>Entradas no mês</small></div>
+          <div><span>Despesa mensal</span><strong class="danger-text">${formatCurrency(expense)}</strong><small>Saídas no mês</small></div>
+          <div><span>Saldo geral</span><strong>${formatCurrency(balance)}</strong><small>Saldo estimado</small></div>
+        `;
+      }
+
+      const cards = Array.isArray(state.data.cards) ? state.data.cards : [];
+      const firstCard = cards[0];
+      const secondCard = cards[1];
+
+      const accountData = [
+        [firstCard ? `Conta ${firstCard.nickname || firstCard.name}` : 'Conta principal', firstCard ? 'Forma cadastrada' : 'Recebimentos registrados', income || 0, '💠', firstCard?.color || '#06B6D4'],
+        [secondCard ? `Conta ${secondCard.nickname || secondCard.name}` : 'Pix / Conta principal', secondCard ? 'Forma cadastrada' : 'Conta manual', Math.max(0, balance), '◇', secondCard?.color || '#14B8A6'],
+        ['Carteira', 'Saldo manual estimado', Math.max(0, balance), '💵', '#22C55E'],
+        ['Fatura do mês', 'Total filtrado no dashboard', -expense, '💳', '#6366F1']
+      ];
+
+      const accounts = $('#overviewAccounts');
+      if (accounts) {
+        accounts.innerHTML = accountData.map(([name, subtitle, amount, icon, color]) => `
+          <div class="overview-row">
+            <div class="overview-row-left">
+              <span class="overview-icon" style="--icon-bg:${color}">${icon}</span>
+              <div><strong>${escapeHTML(name)}</strong><span>${escapeHTML(subtitle)}</span></div>
+            </div>
+            <div class="overview-row-value ${amount < 0 ? 'danger-text' : ''}">
+              <strong>${formatCurrency(amount)}</strong>
+              <small>${amount < 0 ? 'em fatura' : 'em conta'}</small>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      const chips = $('#overviewAccountChips');
+      if (chips) {
+        chips.innerHTML = accountData.slice(0, 4).map(([name, subtitle, amount, icon, color]) => `
+          <div class="account-chip">
+            <span class="overview-icon" style="--icon-bg:${color}">${icon}</span>
+            <strong>${escapeHTML(name.replace('Conta ', ''))}</strong>
+            <small>${formatCurrency(amount)}</small>
+          </div>
+        `).join('');
+      }
+
+      const cardsBox = $('#overviewCards');
+      if (cardsBox) {
+        if (!cards.length) {
+          cardsBox.innerHTML = `
+            <div class="empty-state compact-empty">
+              <strong>Nenhum cartão cadastrado</strong>
+              <span>Adicione uma forma de pagamento para acompanhar faturas aqui.</span>
+            </div>
+          `;
+        } else {
+          cardsBox.innerHTML = cards.slice(0, 4).map(card => {
+            const invoice = (t?.installments || []).filter(i => i.cardId === card.id).reduce((s, i) => s + money(i.amount), 0);
+            const limit = money(card.limit);
+            const available = limit ? Math.max(0, limit - invoice) : 0;
+            const closeText = card.closeDay ? `Fecha dia ${card.closeDay}` : 'Fatura manual';
+            return `
+              <div class="overview-card-item">
+                <div class="mini-card-preview" style="--card-color:${card.color || '#6366F1'}">
+                  <span>${escapeHTML((card.nickname || card.name || 'YR').slice(0, 2))}</span>
+                </div>
+                <div class="overview-card-info">
+                  <strong>${escapeHTML(card.nickname || card.name)}</strong>
+                  <span>${escapeHTML(card.type || 'Crédito')}</span>
+                  <div class="overview-card-metrics">
+                    <small>Limite disponível<br><b>${limit ? formatCurrency(available) : 'Sem limite'}</b></small>
+                    <small>Fatura atual<br><b class="${invoice > 0 ? 'danger-text' : ''}">${formatCurrency(invoice)}</b></small>
+                  </div>
+                </div>
+                <div class="overview-card-actions">
+                  <span class="mini-due-pill">${escapeHTML(closeText)}</span>
+                  <button class="secondary-button tiny-button" type="button" onclick="FinCard.showCardInvoice('${card.id}')">Ver fatura</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao renderizar visão geral financeira:', error);
+    }
   }
 
   function renderRankings(installments) {
@@ -624,7 +731,7 @@
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=8" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=9" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -786,6 +893,16 @@
   window.FinCard = {
     editPurchase(id) { showPage('newPurchase'); renderPurchaseForm(getById(state.data.purchases, id)); }, deletePurchase,
     setInstallmentStatus(id, status) { const i = getById(state.data.installments, id); if (i) { i.status = status; saveToStorage(); renderAll(); } },
+    showCardInvoice(id) {
+      const card = getById(state.data.cards, id);
+      if (!card) return;
+      const month = state.filters.dashboard.month;
+      const year = state.filters.dashboard.year;
+      const list = filterByMonthYear(state.data.installments, month, year).filter(i => i.cardId === id);
+      const total = list.reduce((s, i) => s + money(i.amount), 0);
+      openModal(`Fatura - ${escapeHTML(card.nickname || card.name)}`, `<div class="stack-list"><div class="stack-item"><strong>Total da fatura</strong><b>${formatCurrency(total)}</b></div>${list.length ? list.map(i => `<div class="stack-item"><div><strong>${escapeHTML(i.description)}</strong><span>${i.label} • ${monthName(i.month)}/${i.year}</span></div><b>${formatCurrency(i.amount)}</b></div>`).join('') : emptyHTML()}</div>`, () => {});
+      $('#modalForm')?.remove();
+    },
     showPurchaseDetails(id) { const p = getById(state.data.purchases, id); if (!p) return; openModal('Detalhes da compra', `<div class="full stack-list"><div class="stack-item"><strong>${escapeHTML(p.description)}</strong><b>${formatCurrency(p.total)}</b></div><p>Cartão: ${cardName(p.cardId)}<br>Categoria: ${categoryName(p.categoryId)}<br>Estabelecimento real: ${escapeHTML(p.merchantReal)}<br>Nome na fatura: ${escapeHTML(p.invoiceName)}<br>Tipo: ${p.type}<br>Pessoa: ${personName(p.personId)}<br>Observações: ${escapeHTML(p.notes || '-')}</p></div>`, () => {}); $('#modalForm .form-actions').remove(); },
     personHistory(id) { const list = state.data.installments.filter(i => i.personId === id); const pays = paymentsFor(id); openModal(`Histórico de ${personName(id)}`, `<div class="full"><h3>Parcelas</h3>${table(list, ['Mês','Descrição','Valor que deve','Status'], i => [`${monthName(i.month)}/${i.year}`, escapeHTML(i.description), formatCurrency(i.otherAmount), statusBadge(i.status)])}<h3>Pagamentos</h3>${table(pays, ['Data','Valor','Forma','Referência'], p => [formatDate(p.date), formatCurrency(p.amount), p.method, `${monthName(p.month)}/${p.year}`])}</div>`, () => {}); $('#modalForm .form-actions').remove(); },
     openCardModal, openPersonModal, openCategoryModal, openMerchantModal, openPaymentModal, deleteItem
@@ -838,7 +955,7 @@
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=8').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=9').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
