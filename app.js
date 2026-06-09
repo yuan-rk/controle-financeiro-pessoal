@@ -516,13 +516,17 @@
     gate.innerHTML = `
       <div class="auth-card">
         <div class="brand auth-brand"><div class="brand-logo">F</div><div><strong>FinCard Pro</strong><span>sincronização em nuvem</span></div></div>
-        <h1>Entre para sincronizar seus dados</h1>
-        <p>Use o mesmo e-mail e senha no celular e no computador para acessar os mesmos cartões, compras, parcelas e recebimentos.</p>
-        <form id="authForm" class="auth-form">
+        <div class="auth-copy">
+          <span class="auth-kicker">Conta segura</span>
+          <h1>Entre para sincronizar seus dados</h1>
+          <p>Use o mesmo e-mail e senha no celular e no computador para acessar os mesmos cartões, compras, parcelas e recebimentos.</p>
+        </div>
+        <form id="authForm" class="auth-form" novalidate>
           <label>E-mail<input name="email" type="email" autocomplete="email" required placeholder="seu@email.com"></label>
           <label>Senha<input name="password" type="password" autocomplete="current-password" required minlength="6" placeholder="mínimo 6 caracteres"></label>
+          <div class="auth-message" id="authMessage" role="status" aria-live="polite" hidden></div>
           <div class="auth-actions">
-            <button class="primary-button" type="submit" data-auth="login">Entrar</button>
+            <button class="primary-button" type="submit" id="loginBtn">Entrar</button>
             <button class="secondary-button" type="button" id="signupBtn">Criar conta</button>
           </div>
         </form>
@@ -532,28 +536,71 @@
     return gate;
   }
 
+  function showAuthMessage(message, type = 'info') {
+    const box = $('#authMessage');
+    if (!box) return;
+    box.hidden = false;
+    box.className = `auth-message ${type}`;
+    box.textContent = message;
+  }
+
   async function handleAuth(mode) {
     const form = $('#authForm');
-    const email = form.elements.email.value.trim();
-    const password = form.elements.password.value;
-    if (!email || !password) return;
-    const action = mode === 'signup'
-      ? state.supabase.auth.signUp({ email, password })
-      : state.supabase.auth.signInWithPassword({ email, password });
-    const { data, error } = await action;
-    if (error) { toast(error.message, 'error'); return; }
-    state.user = data.user || data.session?.user || null;
-    if (!state.user) {
-      toast('Conta criada. Se a confirmação de e-mail estiver ligada no Supabase, confirme o e-mail antes de entrar.', 'success');
+    if (!form) return;
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      showAuthMessage('Preencha um e-mail válido e uma senha com pelo menos 6 caracteres.', 'error');
       return;
     }
-    $('#authGate')?.remove();
-    setAppVisible(true);
-    await loadFromCloud();
-    updateAccountPill();
-    renderPurchaseForm();
-    renderAll();
-    toast(mode === 'signup' ? 'Conta criada e conectada.' : 'Login realizado.', 'success');
+
+    if (!state.supabase) {
+      showAuthMessage('O Supabase não carregou. Recarregue a página e tente novamente.', 'error');
+      return;
+    }
+
+    const email = form.elements.email.value.trim();
+    const password = form.elements.password.value;
+    const loginBtn = $('#loginBtn');
+    const signupBtn = $('#signupBtn');
+    const originalLogin = loginBtn?.textContent || 'Entrar';
+    const originalSignup = signupBtn?.textContent || 'Criar conta';
+
+    try {
+      if (loginBtn) loginBtn.disabled = true;
+      if (signupBtn) signupBtn.disabled = true;
+      if (mode === 'signup' && signupBtn) signupBtn.textContent = 'Criando...';
+      if (mode !== 'signup' && loginBtn) loginBtn.textContent = 'Entrando...';
+      showAuthMessage(mode === 'signup' ? 'Criando sua conta...' : 'Entrando na sua conta...', 'info');
+
+      const action = mode === 'signup'
+        ? state.supabase.auth.signUp({ email, password })
+        : state.supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await action;
+      if (error) {
+        showAuthMessage(error.message, 'error');
+        return;
+      }
+
+      state.user = data.user || data.session?.user || null;
+      if (!state.user) {
+        showAuthMessage('Conta criada. Se a confirmação de e-mail ainda estiver ligada no Supabase, confirme o e-mail antes de entrar.', 'success');
+        return;
+      }
+
+      $('#authGate')?.remove();
+      setAppVisible(true);
+      await loadFromCloud();
+      updateAccountPill();
+      renderPurchaseForm();
+      renderAll();
+      toast(mode === 'signup' ? 'Conta criada e conectada.' : 'Login realizado.', 'success');
+    } catch (err) {
+      console.error(err);
+      showAuthMessage('Não foi possível conectar agora. Confira sua internet, a chave do Supabase e tente novamente.', 'error');
+    } finally {
+      if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = originalLogin; }
+      if (signupBtn) { signupBtn.disabled = false; signupBtn.textContent = originalSignup; }
+    }
   }
 
   function showAuthGate() {
