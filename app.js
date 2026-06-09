@@ -544,6 +544,18 @@
     box.textContent = message;
   }
 
+  window.addEventListener('error', (event) => {
+    const msg = event?.message || 'Erro desconhecido no JavaScript.';
+    console.error(event.error || msg);
+    showAuthMessage(`Erro no app: ${msg}`, 'error');
+  });
+
+  window.addEventListener('unhandledrejection', (event) => {
+    const msg = event?.reason?.message || String(event?.reason || 'Falha desconhecida.');
+    console.error(event.reason);
+    showAuthMessage(`Falha de conexão: ${msg}`, 'error');
+  });
+
   async function handleAuth(mode) {
     const form = $('#authForm');
     if (!form) return;
@@ -606,8 +618,32 @@
   function showAuthGate() {
     setAppVisible(false);
     const gate = ensureAuthGate();
-    gate.querySelector('#authForm').onsubmit = (e) => { e.preventDefault(); handleAuth('login'); };
-    gate.querySelector('#signupBtn').onclick = () => handleAuth('signup');
+    const form = gate.querySelector('#authForm');
+    const signup = gate.querySelector('#signupBtn');
+    const login = gate.querySelector('#loginBtn');
+
+    // Evita perder o clique em alguns navegadores quando o GitHub Pages entrega arquivos em cache.
+    // Usamos addEventListener e também onclick como fallback simples.
+    const doLogin = (e) => {
+      if (e) e.preventDefault();
+      handleAuth('login');
+    };
+    const doSignup = (e) => {
+      if (e) e.preventDefault();
+      handleAuth('signup');
+    };
+
+    if (form) {
+      form.onsubmit = doLogin;
+      form.addEventListener('submit', doLogin);
+    }
+    if (signup) {
+      signup.onclick = doSignup;
+      signup.addEventListener('click', doSignup);
+    }
+    if (login) {
+      login.onclick = doLogin;
+    }
   }
 
   async function signOut() {
