@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fincard-pro-pwa-v1';
+const CACHE_NAME = 'fincard-pro-v4';
 const APP_SHELL = [
   './',
   './index.html',

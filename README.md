@@ -62,20 +62,6 @@ Como o projeto é HTML, CSS e JavaScript puro, pode ser hospedado em qualquer ho
 - Rateio entre mais de uma pessoa na mesma compra.
 
 
-## Instalar no celular como aplicativo (PWA)
+## PWA
 
-Esta versão inclui `manifest.json`, `sw.js` e ícones do aplicativo. Depois de enviar os arquivos ao GitHub Pages e abrir o site no celular:
-
-### Android / Chrome
-1. Abra o site.
-2. Toque nos três pontinhos do Chrome.
-3. Toque em **Instalar app** ou **Adicionar à tela inicial**.
-4. Confirme o nome **FinCard Pro**.
-
-### iPhone / iPad / Safari
-1. Abra o site no Safari.
-2. Toque no botão de compartilhar.
-3. Toque em **Adicionar à Tela de Início**.
-4. Confirme o nome **FinCard Pro**.
-
-O app instalado continua usando o mesmo site e o mesmo Supabase. Entre com o mesmo e-mail e senha para ver os mesmos dados.
+Esta versão inclui manifest.json, sw.js e ícones para instalação na tela inicial do celular. Após subir ao GitHub Pages, acesse com ?v=4 e limpe/cache se necessário.
