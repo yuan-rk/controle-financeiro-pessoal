@@ -1574,3 +1574,212 @@ input:focus,select:focus,textarea:focus{
     grid-template-columns:1fr!important;
   }
 }
+
+
+
+/* v17: regra final para mobile/tablet usar somente barra inferior */
+
+/* Esconde o botão hambúrguer sempre. A navegação mobile será a barra inferior. */
+.side-toggle-btn,
+#sideToggleBtn{
+  display:none!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+
+/* PC grande: sidebar abre pela borda esquerda. */
+@media (hover:hover) and (pointer:fine) and (min-width:1001px){
+  .mobile-nav{
+    display:none!important;
+  }
+
+  .sidebar-backdrop,
+  #sidebarBackdrop{
+    display:none!important;
+  }
+
+  .app-shell{
+    display:block!important;
+  }
+
+  .main-content{
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+    padding:28px 28px 28px 96px!important;
+    overflow-x:hidden!important;
+  }
+
+  .sidebar{
+    display:flex!important;
+    position:fixed!important;
+    top:0!important;
+    left:0!important;
+    width:var(--sidebar)!important;
+    min-width:var(--sidebar)!important;
+    height:100vh!important;
+    transform:translateX(calc(-1 * var(--sidebar) + 14px))!important;
+    transition:transform .24s ease, box-shadow .24s ease!important;
+    z-index:80!important;
+    overflow:auto!important;
+    box-shadow:none!important;
+  }
+
+  .sidebar:hover,
+  .sidebar:focus-within{
+    transform:translateX(0)!important;
+    box-shadow:28px 0 70px rgba(2,6,23,.42)!important;
+  }
+}
+
+/* Tablet e celular: sidebar some; barra inferior aparece e rola para todas as abas. */
+@media (max-width:1000px), (hover:none), (pointer:coarse){
+  html, body{
+    overflow-x:hidden!important;
+  }
+
+  .sidebar,
+  aside.sidebar,
+  .sidebar-backdrop,
+  #sidebarBackdrop,
+  .mobile-drawer,
+  .drawer-backdrop,
+  .side-toggle-btn,
+  #sideToggleBtn{
+    display:none!important;
+    visibility:hidden!important;
+    opacity:0!important;
+    pointer-events:none!important;
+  }
+
+  .app-shell{
+    display:block!important;
+    grid-template-columns:1fr!important;
+    width:100%!important;
+    max-width:100vw!important;
+  }
+
+  .main-content{
+    width:100%!important;
+    max-width:100vw!important;
+    margin:0!important;
+    padding:22px 14px 116px!important;
+    overflow-x:hidden!important;
+  }
+
+  .mobile-nav,
+  #mobileNav{
+    position:fixed!important;
+    left:0!important;
+    right:0!important;
+    bottom:0!important;
+    z-index:999!important;
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    gap:8px!important;
+    width:100%!important;
+    max-width:100vw!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom))!important;
+    background:rgba(15,23,42,.98)!important;
+    border-top:1px solid var(--border)!important;
+    backdrop-filter:blur(16px)!important;
+    box-shadow:0 -18px 50px rgba(0,0,0,.32)!important;
+    -webkit-overflow-scrolling:touch!important;
+    scrollbar-width:none!important;
+  }
+
+  .mobile-nav::-webkit-scrollbar,
+  #mobileNav::-webkit-scrollbar{
+    display:none!important;
+  }
+
+  .mobile-nav .nav-btn,
+  #mobileNav .nav-btn{
+    flex:0 0 auto!important;
+    min-width:104px!important;
+    max-width:132px!important;
+    height:58px!important;
+    border-radius:16px!important;
+    padding:8px 12px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:7px!important;
+    background:transparent!important;
+    color:var(--muted)!important;
+  }
+
+  .mobile-nav .nav-btn.active,
+  #mobileNav .nav-btn.active{
+    background:rgba(99,102,241,.28)!important;
+    color:var(--text)!important;
+  }
+
+  .mobile-nav .nav-icon,
+  #mobileNav .nav-icon{
+    width:24px!important;
+    min-width:24px!important;
+    height:24px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    line-height:1!important;
+    font-size:1.1rem!important;
+  }
+
+  .mobile-nav .nav-btn span:not(.nav-icon),
+  #mobileNav .nav-btn span:not(.nav-icon){
+    display:block!important;
+    font-size:.8rem!important;
+    line-height:1.05!important;
+    white-space:normal!important;
+    text-align:left!important;
+  }
+
+  .topbar{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:flex-start!important;
+    gap:12px!important;
+  }
+
+  .topbar-actions{
+    width:100%!important;
+    max-width:100%!important;
+    justify-content:flex-start!important;
+    overflow:visible!important;
+    flex-wrap:wrap!important;
+  }
+
+  .filters-bar{
+    grid-template-columns:1fr 1fr!important;
+    overflow:hidden!important;
+  }
+
+  .filters-bar label:nth-child(3),
+  .filters-bar button{
+    grid-column:1 / -1!important;
+  }
+
+  .metric-grid,
+  .chart-grid,
+  .info-grid,
+  .overview-grid{
+    grid-template-columns:1fr!important;
+  }
+
+  .finance-overview-section{
+    padding:14px!important;
+  }
+
+  .account-chip-grid{
+    grid-template-columns:1fr 1fr!important;
+  }
+
+  .overview-card-item{
+    grid-template-columns:1fr!important;
+  }
+}
