@@ -33,6 +33,15 @@
   };
 
   const $ = (selector) => document.querySelector(selector);
+
+  function applyTouchLayoutClass() {
+    const isTouch = (navigator.maxTouchPoints || 0) > 0 || window.matchMedia('(any-pointer: coarse)').matches;
+    document.documentElement.classList.toggle('touch-layout', isTouch);
+    if (document.body) document.body.classList.toggle('touch-layout', isTouch);
+  }
+  applyTouchLayoutClass();
+  window.addEventListener('resize', applyTouchLayoutClass);
+
   const $$ = (selector) => [...document.querySelectorAll(selector)];
   const uid = (prefix) => `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
   const money = (value) => Number(value || 0);
@@ -731,7 +740,7 @@
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=19" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=20" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -963,7 +972,7 @@
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=19').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=20').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });

@@ -64,4 +64,4 @@ Como o projeto é HTML, CSS e JavaScript puro, pode ser hospedado em qualquer ho
 
 ## PWA
 
-Esta versão inclui manifest.json, sw.js e ícones para instalação na tela inicial do celular. Após subir ao GitHub Pages, acesse com ?v=19 e limpe/cache se necessário.
+Esta versão inclui manifest.json, sw.js e ícones para instalação na tela inicial do celular. Após subir ao GitHub Pages, acesse com ?v=20 e limpe/cache se necessário.
