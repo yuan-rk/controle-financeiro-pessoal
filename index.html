@@ -7,10 +7,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="YR Finanças" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="manifest" href="manifest.json?v=25" />
-  <link rel="apple-touch-icon" href="icon-192.png?v=25" />
+  <link rel="manifest" href="manifest.json?v=27" />
+  <link rel="apple-touch-icon" href="icon-192.png?v=27" />
   <title>YR Finanças | Controle Financeiro Pessoal</title>
-  <link rel="icon" type="image/png" href="icon-192.png?v=25" />
+  <link rel="icon" type="image/png" href="icon-192.png?v=27" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -20,7 +20,7 @@
   <div class="app-shell">
     <aside class="sidebar" aria-label="Menu principal">
       <div class="brand">
-        <div class="brand-logo"><img src="icon-192.png?v=25" alt="Logo YR Finanças"></div>
+        <div class="brand-logo"><img src="icon-192.png?v=27" alt="Logo YR Finanças"></div>
         <div>
           <strong>YR Finanças</strong>
           <span>controle de faturas</span>
@@ -137,10 +137,18 @@
       </section>
 
       <section class="page" id="newPurchasePage">
+        <article class="panel form-panel quick-purchase-panel">
+          <div class="panel-header">
+            <h2>⚡ Lançamento rápido</h2>
+            <span class="muted">Cadastre uma compra em poucos campos. O app tenta reconhecer o estabelecimento salvo.</span>
+          </div>
+          <form id="quickPurchaseForm" class="smart-form quick-form"></form>
+        </article>
+
         <article class="panel form-panel">
           <div class="panel-header">
-            <h2>Nova compra</h2>
-            <span class="muted">As parcelas são geradas automaticamente.</span>
+            <h2>Nova compra completa</h2>
+            <span class="muted">Use quando quiser detalhar categoria, observações e divisão exata.</span>
           </div>
           <form id="purchaseForm" class="smart-form"></form>
         </article>
@@ -160,6 +168,21 @@
         <div class="section-head"><div><h2>Parcelas</h2><p>Acompanhe status, fatura e devedores por parcela.</p></div></div>
         <div class="filters-bar wrap" id="installmentFilters"></div>
         <div class="table-card"><div id="installmentsTable"></div></div>
+      </section>
+
+      <section class="page" id="invoiceCheckPage">
+        <div class="section-head">
+          <div><h2>Conferir fatura</h2><p>Marque os lançamentos encontrados na fatura do banco e veja se o total bate.</p></div>
+          <div class="actions"><button class="secondary-button" onclick="FinCard.markInvoiceList(true)">Marcar tudo</button><button class="ghost-button" onclick="FinCard.markInvoiceList(false)">Desmarcar</button></div>
+        </div>
+        <div class="filters-bar wrap">
+          <label>Mês<select id="invoiceCheckMonth"></select></label>
+          <label>Ano<select id="invoiceCheckYear"></select></label>
+          <label>Cartão<select id="invoiceCheckCard"></select></label>
+          <label>Total da fatura no banco<input id="invoiceBankTotal" type="number" step="0.01" min="0" placeholder="0,00"></label>
+        </div>
+        <div class="metric-grid" id="invoiceCheckSummary"></div>
+        <div class="table-card"><div id="invoiceCheckList"></div></div>
       </section>
 
       <section class="page" id="cardsPage">

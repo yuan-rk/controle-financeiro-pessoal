@@ -11,7 +11,7 @@
 
   const menu = [
     ['dashboard', '📊', 'Dashboard'], ['newPurchase', '➕', 'Nova compra'], ['purchases', '🧾', 'Compras'],
-    ['installments', '📆', 'Parcelas'], ['cards', '💳', 'Formas de pagamento'], ['people', '👥', 'Pessoas'],
+    ['installments', '📆', 'Parcelas'], ['invoiceCheck', '✅', 'Conferir fatura'], ['cards', '💳', 'Formas de pagamento'], ['people', '👥', 'Pessoas'],
     ['payments', '💸', 'Recebimentos'], ['merchants', '🏪', 'Estabelecimentos'], ['categories', '🏷️', 'Categorias'], ['settings', '⚙️', 'Configurações']
   ];
 
@@ -22,6 +22,7 @@
       dashboard: { month: currentMonth, year: currentYear, cardId: 'all' },
       purchases: { month: 'all', year: String(currentYear), cardId: 'all', personId: 'all', categoryId: 'all', q: '' },
       installments: { month: String(currentMonth), year: String(currentYear), cardId: 'all', personId: 'all', status: 'all' },
+      invoiceCheck: { month: currentMonth, year: currentYear, cardId: 'all', bankTotal: '' },
       people: { month: currentMonth, year: currentYear }
     },
     data: null,
@@ -239,8 +240,7 @@
   function loadLocalDataOrDefault() {
     const raw = localStorage.getItem(STORAGE_KEY);
     state.data = raw ? JSON.parse(raw) : defaultData();
-    if (!state.data.settings) state.data.settings = { theme: 'dark' };
-    ensureDefaultCategories();
+    ensureDataShape();
     applyTheme();
     return { data: state.data, hadLocalData: Boolean(raw) };
   }
@@ -267,8 +267,7 @@
     if (record?.data) {
       state.cloudRecordId = record.id;
       state.data = record.data;
-      if (!state.data.settings) state.data.settings = { theme: 'dark' };
-      ensureDefaultCategories();
+      ensureDataShape();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
       applyTheme();
       return;
@@ -335,6 +334,45 @@
     return new Date(y, m - 1 + offset, d || 1, 12, 0, 0);
   }
 
+  function invoiceReferenceDate(purchase, installmentIndex = 0) {
+    const base = new Date(`${purchase.date}T12:00:00`);
+    const card = purchase.cardId ? getById(state.data.cards, purchase.cardId) : null;
+    const isCredit = (purchase.paymentMethod || 'Cartão de crédito') === 'Cartão de crédito';
+
+    // Regra prática: se comprou depois do fechamento, entra na próxima fatura.
+    // Ex: fecha dia 3, compra dia 4 -> fatura do mês seguinte.
+    const firstOffset = isCredit && card?.closeDay && base.getDate() > Number(card.closeDay) ? 1 : 0;
+    return addMonths(purchase.date, installmentIndex + firstOffset);
+  }
+
+  function rebuildAllInstallments(persist = false) {
+    if (!state.data?.purchases) return;
+    const previous = new Map((state.data.installments || []).map(i => [`${i.purchaseId}-${i.number}`, i]));
+    const rebuilt = [];
+    state.data.purchases.forEach(purchase => {
+      generateInstallments(purchase).forEach(inst => {
+        const old = previous.get(`${inst.purchaseId}-${inst.number}`);
+        if (old) {
+          inst.status = old.status || inst.status;
+          inst.invoiceChecked = Boolean(old.invoiceChecked);
+        }
+        rebuilt.push(inst);
+      });
+    });
+    state.data.installments = rebuilt;
+    if (persist) saveToStorage(false);
+  }
+
+  function ensureDataShape() {
+    if (!state.data) return;
+    ['cards','people','categories','merchants','purchases','installments','payments'].forEach(key => { if (!Array.isArray(state.data[key])) state.data[key] = []; });
+    if (!state.data.settings) state.data.settings = { theme: 'dark' };
+    ensureDefaultCategories();
+    const needsRebuild = state.data.purchases.length && (!state.data.installments.length || state.data.installments.some(i => typeof i.invoiceChecked === 'undefined'));
+    if (needsRebuild) rebuildAllInstallments(false);
+    state.data.installments.forEach(i => { if (typeof i.invoiceChecked === 'undefined') i.invoiceChecked = false; });
+  }
+
   function generateInstallments(purchase) {
     const count = Math.max(1, Number(purchase.installmentsCount || 1));
     const base = Math.floor((money(purchase.total) / count) * 100) / 100;
@@ -345,14 +383,15 @@
     const otherRatio = money(purchase.total) ? money(purchase.otherShare) / money(purchase.total) : 0;
 
     return values.map((value, index) => {
-      const ref = addMonths(purchase.date, index);
+      const ref = invoiceReferenceDate(purchase, index);
       return {
         id: uid('inst'), purchaseId: purchase.id, purchaseDate: purchase.date,
         month: ref.getMonth() + 1, year: ref.getFullYear(), description: purchase.description,
         merchantReal: purchase.merchantReal, invoiceName: purchase.invoiceName, number: index + 1,
         totalInstallments: count, label: `${index + 1}/${count}`, amount: value, paymentMethod: purchase.paymentMethod || 'Cartão de crédito', cardId: purchase.cardId || '',
         categoryId: purchase.categoryId, type: purchase.type, personId: purchase.personId, status: purchase.status,
-        myAmount: +(value * myRatio).toFixed(2), otherAmount: +(value * otherRatio).toFixed(2)
+        myAmount: +(value * myRatio).toFixed(2), otherAmount: +(value * otherRatio).toFixed(2),
+        invoiceChecked: Boolean(purchase.invoiceChecked)
       };
     });
   }
@@ -480,10 +519,11 @@
     fillMonthYear($('#dashboardMonth'), $('#dashboardYear'), state.filters.dashboard.month, state.filters.dashboard.year);
     $('#dashboardCard').innerHTML = cardOptions(false, true); $('#dashboardCard').value = state.filters.dashboard.cardId;
     const t = calculateDashboardTotals();
+    const riskIfUnpaid = t.mine + t.pending;
     const metrics = [
-      ['Total da fatura', t.totalInvoice, 'Soma de todas as parcelas no mês', 'rgba(99,102,241,.75)'], ['Meu gasto', t.mine, 'Parte que você deve pagar', 'rgba(34,197,94,.75)'],
-      ['Terceiros devem', t.others, 'Valor que outras pessoas precisam devolver', 'rgba(245,158,11,.75)'], ['Já recebido', t.received, 'Pagamentos registrados', 'rgba(6,182,212,.75)'],
-      ['Pendente a receber', t.pending, 'Ainda em aberto', 'rgba(239,68,68,.75)'], ['Compras no mês', t.purchaseCount, 'Compras com parcela neste mês', 'rgba(99,102,241,.75)', false],
+      ['Fatura total', t.totalInvoice, 'Tudo que vai aparecer no banco', 'rgba(99,102,241,.75)'], ['Meu custo real', t.mine, 'O que é seu de verdade', 'rgba(34,197,94,.75)'],
+      ['A receber', t.others, 'Parte de outras pessoas', 'rgba(245,158,11,.75)'], ['Já recebido', t.received, 'Pagamentos registrados', 'rgba(6,182,212,.75)'],
+      ['Risco se ninguém pagar', riskIfUnpaid, 'Seu custo + pendências abertas', 'rgba(239,68,68,.75)'], ['Compras no mês', t.purchaseCount, 'Compras com parcela neste mês', 'rgba(99,102,241,.75)', false],
       ['Parcelas ativas', t.activeInstallments, 'Parcelas na fatura filtrada', 'rgba(6,182,212,.75)', false], ['Formas ativas', t.activeCards, 'Formas de pagamento disponíveis', 'rgba(34,197,94,.75)', false]
     ];
     $('#dashboardMetrics').innerHTML = metrics.map(m => `<div class="metric-card" style="--accent:${m[3]}"><span>${m[0]}</span><strong>${m[4] === false ? m[1] : formatCurrency(m[1])}</strong><small>${m[2]}</small></div>`).join('');
@@ -525,10 +565,10 @@
       const othersPending = money(t?.pending || 0);
 
       const accountData = [
-        ['Receita estimada', 'Entradas registradas no mês', income || 0, '📈', '#22C55E'],
-        ['Gastos estimados', 'Sua parte + faturas do mês', myExpense || totalInvoice, '📉', '#EF4444'],
-        ['Saldo após pagar tudo', 'Receita menos seus gastos', income - (myExpense || totalInvoice), '💰', '#06B6D4'],
-        ['Fatura do mês', 'Total em cartões e compras', -totalInvoice, '💳', '#6366F1']
+        ['Fatura total', 'O valor que aparece no banco', -totalInvoice, '💳', '#6366F1'],
+        ['Meu custo real', 'O que realmente sai do seu bolso', -myExpense, '👤', '#EF4444'],
+        ['A receber', 'O que outras pessoas devem', othersPending, '🤝', '#F59E0B'],
+        ['Risco se ninguém pagar', 'Seu custo + pendências', -(myExpense + othersPending), '⚠️', '#DC2626']
       ];
 
       const accounts = $('#overviewAccounts');
@@ -636,6 +676,69 @@
     chart('receivedPendingChart', 'doughnut', ['Recebido', 'Pendente'], [t.received, t.pending], 'Recebimentos');
   }
 
+  function renderQuickPurchaseForm() {
+    const box = $('#quickPurchaseForm');
+    if (!box) return;
+    const paymentMethods = ['Cartão de crédito', 'Cartão de débito', 'Pix', 'Dinheiro', 'Boleto', 'Crediário', 'Transferência', 'Outro'];
+    box.innerHTML = `
+      <label class="field">Data<input name="date" type="date" value="${new Date().toISOString().slice(0,10)}" required></label>
+      <label class="field">Nome na fatura<input name="invoiceName" list="quickInvoiceList" placeholder="Ex: LOJAS E PRODUTOS DA TERRA" required><datalist id="quickInvoiceList">${state.data.merchants.map(m=>`<option value="${escapeHTML(m.invoiceName)}"></option>`).join('')}</datalist></label>
+      <label class="field">O que foi de verdade<input name="merchantReal" list="quickMerchantList" placeholder="Ex: Edu Pizzas"><datalist id="quickMerchantList">${state.data.merchants.map(m=>`<option value="${escapeHTML(m.realName)}"></option>`).join('')}</datalist></label>
+      ${field('Valor', 'total', 'number', '', '0,00', 'step="0.01" min="0" required')}
+      <label class="field">Forma<select name="paymentMethod" required>${paymentMethods.map(x=>`<option>${x}</option>`).join('')}</select></label>
+      <label class="field quick-card-field">Cartão<select name="cardId">${cardSelectOptions(true)}</select></label>
+      <label class="field quick-installment-field">Parcelas<input name="installmentsCount" type="number" value="1" min="1" required></label>
+      <label class="field">Tipo<select name="type"><option>Minha</option><option>De outra pessoa</option><option>Dividida</option></select></label>
+      <label class="field quick-person-field">Pessoa<select name="personId">${peopleOptions(true)}</select></label>
+      <label class="field quick-share-field">Minha parte<input name="myShare" type="number" step="0.01" min="0"></label>
+      <label class="field quick-share-field">Parte da outra pessoa<input name="otherShare" type="number" step="0.01" min="0"></label>
+      <div class="form-actions"><button class="secondary-button" type="button" id="expandFullPurchase">Preencher completo</button><button class="primary-button" type="submit">Lançar rápido</button></div>`;
+    const updateQuick = () => {
+      const method = box.elements.paymentMethod.value;
+      const showCard = paymentNeedsCard(method);
+      const showInstallments = paymentAllowsInstallments(method);
+      const type = box.elements.type.value;
+      $$('.quick-card-field').forEach(el => el.style.display = showCard ? 'flex' : 'none');
+      $$('.quick-installment-field').forEach(el => el.style.display = showInstallments ? 'flex' : 'none');
+      $$('.quick-person-field').forEach(el => el.style.display = type === 'Minha' ? 'none' : 'flex');
+      $$('.quick-share-field').forEach(el => el.style.display = type === 'Dividida' ? 'flex' : 'none');
+      if (!showCard) box.elements.cardId.value = '';
+      if (!showInstallments) box.elements.installmentsCount.value = 1;
+      const total = money(box.elements.total.value);
+      if (type === 'Minha') { box.elements.myShare.value = total || ''; box.elements.otherShare.value = 0; }
+      if (type === 'De outra pessoa') { box.elements.myShare.value = 0; box.elements.otherShare.value = total || ''; }
+    };
+    const fillMerchant = () => {
+      const invoice = box.elements.invoiceName.value.trim().toLowerCase();
+      const real = box.elements.merchantReal.value.trim().toLowerCase();
+      const found = state.data.merchants.find(m => m.invoiceName.toLowerCase() === invoice || m.realName.toLowerCase() === real);
+      if (found) {
+        box.elements.invoiceName.value = found.invoiceName;
+        box.elements.merchantReal.value = found.realName;
+      }
+    };
+    box.oninput = () => { fillMerchant(); updateQuick(); };
+    box.elements.paymentMethod.onchange = updateQuick;
+    box.elements.type.onchange = updateQuick;
+    $('#expandFullPurchase').onclick = () => {
+      const v = Object.fromEntries(new FormData(box).entries());
+      const found = state.data.merchants.find(m => m.invoiceName.toLowerCase() === String(v.invoiceName || '').toLowerCase() || m.realName.toLowerCase() === String(v.merchantReal || '').toLowerCase());
+      renderPurchaseForm({ ...v, description: v.merchantReal || v.invoiceName, categoryId: found?.categoryId || state.data.categories[0]?.id || '', status: 'Pendente', notes: '' });
+      document.querySelector('#purchaseForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    box.onsubmit = (e) => {
+      e.preventDefault();
+      try {
+        const v = Object.fromEntries(new FormData(box).entries());
+        const found = state.data.merchants.find(m => m.invoiceName.toLowerCase() === String(v.invoiceName || '').toLowerCase() || m.realName.toLowerCase() === String(v.merchantReal || '').toLowerCase());
+        const description = v.merchantReal || found?.realName || v.invoiceName;
+        savePurchase({ ...v, description, merchantReal: v.merchantReal || found?.realName || description, invoiceName: v.invoiceName || found?.invoiceName || description, categoryId: found?.categoryId || state.data.categories[0]?.id || '', status: 'Pendente', notes: '' });
+        box.reset(); renderQuickPurchaseForm(); showPage('purchases');
+      } catch (err) { toast(err.message, 'error'); }
+    };
+    updateQuick();
+  }
+
   function renderPurchaseForm(existing = null) {
     const p = existing || { date: new Date().toISOString().slice(0,10), description: '', merchantReal: '', invoiceName: '', total: '', paymentMethod: 'Cartão de crédito', installmentsCount: 1, cardId: getActiveCards()[0]?.id || '', categoryId: state.data.categories[0]?.id || '', type: 'Minha', personId: '', myShare: '', otherShare: '', notes: '', status: 'Pendente' };
     const paymentMethods = ['Cartão de crédito', 'Cartão de débito', 'Pix', 'Dinheiro', 'Boleto', 'Crediário', 'Transferência', 'Outro'];
@@ -737,6 +840,42 @@
     $('#installmentsTable').innerHTML = table(list, ['Mês','Descrição','Parcela','Valor','Meu valor','Pessoa deve','Forma','Pessoa','Status','Ações'], i => [`${monthName(i.month)}/${i.year}`, escapeHTML(i.description), i.label, formatCurrency(i.amount), formatCurrency(i.myAmount), formatCurrency(i.otherAmount), paymentName(i), personName(i.personId), statusBadge(i.status), `<div class="actions"><button class="mini-btn" onclick="FinCard.setInstallmentStatus('${i.id}','Pago')">Pago</button><button class="mini-btn" onclick="FinCard.setInstallmentStatus('${i.id}','Pendente')">Pendente</button><button class="mini-btn" onclick="FinCard.showPurchaseDetails('${i.purchaseId}')">Detalhes</button></div>`]);
   }
 
+  function renderInvoiceCheck() {
+    fillMonthYear($('#invoiceCheckMonth'), $('#invoiceCheckYear'), state.filters.invoiceCheck.month, state.filters.invoiceCheck.year);
+    $('#invoiceCheckCard').innerHTML = cardOptions(false, true);
+    $('#invoiceCheckCard').value = state.filters.invoiceCheck.cardId;
+    $('#invoiceBankTotal').value = state.filters.invoiceCheck.bankTotal || '';
+
+    const { month, year, cardId, bankTotal } = state.filters.invoiceCheck;
+    let list = filterByMonthYear(state.data.installments, month, year).filter(i => (i.paymentMethod || 'Cartão de crédito') === 'Cartão de crédito');
+    if (cardId !== 'all') list = list.filter(i => i.cardId === cardId);
+    list.sort((a,b) => (a.cardId || '').localeCompare(b.cardId || '') || String(a.invoiceName || a.description).localeCompare(String(b.invoiceName || b.description)));
+    const expected = list.reduce((s,i)=>s+money(i.amount),0);
+    const checked = list.filter(i => i.invoiceChecked).reduce((s,i)=>s+money(i.amount),0);
+    const bank = money(bankTotal);
+    const diff = bankTotal === '' ? null : +(bank - expected).toFixed(2);
+    const checkedCount = list.filter(i => i.invoiceChecked).length;
+
+    $('#invoiceCheckSummary').innerHTML = `
+      <div class="metric-card"><span>Total esperado pelo app</span><strong>${formatCurrency(expected)}</strong><small>${list.length} lançamento(s) na fatura</small></div>
+      <div class="metric-card"><span>Já conferido</span><strong>${formatCurrency(checked)}</strong><small>${checkedCount}/${list.length} item(ns) marcados</small></div>
+      <div class="metric-card"><span>Total informado pelo banco</span><strong>${bankTotal === '' ? '—' : formatCurrency(bank)}</strong><small>Digite o total da fatura real</small></div>
+      <div class="metric-card ${diff === 0 ? 'ok-card' : diff ? 'danger-card' : ''}"><span>Diferença</span><strong>${diff === null ? '—' : formatCurrency(diff)}</strong><small>${diff === 0 ? 'Tudo bateu' : diff ? 'Existe algo para revisar' : 'Aguardando total do banco'}</small></div>`;
+
+    $('#invoiceCheckList').innerHTML = list.length ? `
+      <div class="table-wrap"><table class="data-table invoice-check-table"><thead><tr><th>Conferido</th><th>Nome na fatura</th><th>Compra real</th><th>Cartão</th><th>Parcela</th><th>Valor</th><th>Dono</th></tr></thead><tbody>
+      ${list.map(i => `<tr class="${i.invoiceChecked ? 'checked-row' : ''}">
+        <td><input type="checkbox" ${i.invoiceChecked ? 'checked' : ''} onchange="FinCard.toggleInvoiceChecked('${i.id}', this.checked)"></td>
+        <td><strong>${escapeHTML(i.invoiceName || i.description)}</strong></td>
+        <td>${escapeHTML(i.merchantReal || i.description)}</td>
+        <td>${cardName(i.cardId)}</td>
+        <td>${i.label}</td>
+        <td><strong>${formatCurrency(i.amount)}</strong></td>
+        <td>${i.type === 'Minha' ? 'Meu' : personName(i.personId)}</td>
+      </tr>`).join('')}
+      </tbody></table></div>` : emptyHTML();
+  }
+
   function filterHTML(kind) {
     const f = state.filters[kind];
     const base = `<label>Mês<select data-filter="month"><option value="all">Todos</option>${Array.from({length:12},(_,i)=>`<option value="${i+1}">${monthName(i+1)}</option>`).join('')}</select></label><label>Ano<select data-filter="year">${Array.from({length:7},(_,i)=>currentYear-2+i).map(y=>`<option value="${y}">${y}</option>`).join('')}</select></label><label>Forma<select data-filter="cardId">${cardOptions(false,true)}</select></label><label>Pessoa<select data-filter="personId">${peopleOptions(false,true)}</select></label>`;
@@ -777,9 +916,10 @@
 
   function renderAll(includeCurrent = true) {
     if (includeCurrent || state.currentPage === 'dashboard') renderDashboard();
-    if (includeCurrent || state.currentPage === 'newPurchase') renderPurchaseForm();
+    if (includeCurrent || state.currentPage === 'newPurchase') { renderQuickPurchaseForm(); renderPurchaseForm(); }
     if (includeCurrent || state.currentPage === 'purchases') renderPurchases();
     if (includeCurrent || state.currentPage === 'installments') renderInstallments();
+    if (includeCurrent || state.currentPage === 'invoiceCheck') renderInvoiceCheck();
     if (includeCurrent || state.currentPage === 'cards') renderCards();
     if (includeCurrent || state.currentPage === 'people') renderPeople();
     if (includeCurrent || state.currentPage === 'payments') renderPayments();
@@ -804,7 +944,7 @@
   function openMerchantModal(id) { const m = getById(state.data.merchants,id) || { realName:'', invoiceName:'', categoryId:state.data.categories[0]?.id || '', notes:'' }; openModal(id?'Editar estabelecimento':'Novo estabelecimento', `${field('Estabelecimento real','realName','text',m.realName,'','required')}${field('Nome na fatura','invoiceName','text',m.invoiceName,'','required')}<label class="field">Categoria padrão<select name="categoryId">${categoryOptions()}</select></label><label class="field full">Observações<textarea name="notes">${escapeHTML(m.notes || '')}</textarea></label>`, v => upsert('merchants',{...m,...v,id:id||uid('merchant')})); setTimeout(()=>{$('#modalForm').elements.categoryId.value=m.categoryId},0); }
   function openPaymentModal(id) { const p = getById(state.data.payments,id) || { date:new Date().toISOString().slice(0,10), personId:'', amount:'', method:'Pix', relatedId:'', month:currentMonth, year:currentYear, notes:'' }; openModal(id?'Editar recebimento':'Novo recebimento', `${field('Data','date','date',p.date,'','required')}<label class="field">Pessoa<select name="personId" required>${peopleOptions()}</select></label>${field('Valor recebido','amount','number',p.amount,'','step="0.01" required')}<label class="field">Forma<select name="method">${['Pix','Dinheiro','Transferência','Cartão','Outro'].map(x=>`<option ${p.method===x?'selected':''}>${x}</option>`).join('')}</select></label><label class="field">Mês<select name="month">${Array.from({length:12},(_,i)=>`<option value="${i+1}">${monthName(i+1)}</option>`).join('')}</select></label>${field('Ano','year','number',p.year)}${field('Compra/parcela relacionada','relatedId','text',p.relatedId || '')}<label class="field full">Observações<textarea name="notes">${escapeHTML(p.notes || '')}</textarea></label>`, v => upsert('payments',{...p,...v,id:id||uid('pay'),amount:money(v.amount),month:Number(v.month),year:Number(v.year)})); setTimeout(()=>{const f=$('#modalForm').elements; f.personId.value=p.personId; f.month.value=p.month;},0); }
 
-  function upsert(list, item) { state.data[list] = state.data[list].filter(x => x.id !== item.id); state.data[list].push(item); }
+  function upsert(list, item) { state.data[list] = state.data[list].filter(x => x.id !== item.id); state.data[list].push(item); if (list === 'cards') rebuildAllInstallments(false); }
   function deleteItem(list, id) { if (!confirm('Tem certeza que deseja excluir este item?')) return; state.data[list] = state.data[list].filter(x => x.id !== id); saveToStorage(); renderAll(); }
 
 
@@ -967,7 +1107,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
   }
   function importData(file) {
     const reader = new FileReader();
-    reader.onload = () => { try { const parsed = JSON.parse(reader.result); ['cards','people','categories','merchants','purchases','installments','payments','settings'].forEach(k => { if (!(k in parsed)) throw new Error(`JSON sem a chave ${k}`); }); state.data = parsed; saveToStorage(); document.documentElement.classList.toggle('light', state.data.settings.theme === 'light'); renderAll(); toast('Backup importado com sucesso.', 'success'); } catch(e) { toast('Arquivo inválido: ' + e.message, 'error'); } };
+    reader.onload = () => { try { const parsed = JSON.parse(reader.result); ['cards','people','categories','merchants','purchases','installments','payments','settings'].forEach(k => { if (!(k in parsed)) throw new Error(`JSON sem a chave ${k}`); }); state.data = parsed; ensureDataShape(); saveToStorage(); document.documentElement.classList.toggle('light', state.data.settings.theme === 'light'); renderAll(); toast('Backup importado com sucesso.', 'success'); } catch(e) { toast('Arquivo inválido: ' + e.message, 'error'); } };
     reader.readAsText(file);
   }
 
@@ -1155,6 +1295,10 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     $('#dashboardYear').onchange = e => { state.filters.dashboard.year = Number(e.target.value); renderDashboard(); };
     $('#dashboardCard').onchange = e => { state.filters.dashboard.cardId = e.target.value; renderDashboard(); };
     $('#refreshDashboard').onclick = renderDashboard;
+    $('#invoiceCheckMonth').onchange = e => { state.filters.invoiceCheck.month = Number(e.target.value); renderInvoiceCheck(); };
+    $('#invoiceCheckYear').onchange = e => { state.filters.invoiceCheck.year = Number(e.target.value); renderInvoiceCheck(); };
+    $('#invoiceCheckCard').onchange = e => { state.filters.invoiceCheck.cardId = e.target.value; renderInvoiceCheck(); };
+    $('#invoiceBankTotal').oninput = e => { state.filters.invoiceCheck.bankTotal = e.target.value; renderInvoiceCheck(); };
     $$('[data-action="new-purchase"]').forEach(btn => btn.onclick = () => showPage('newPurchase'));
     $('#addCardBtn').onclick = () => openCardModal(); $('#addPersonBtn').onclick = () => openPersonModal(); $('#addPaymentBtn').onclick = () => openPaymentModal(); $('#addMerchantBtn').onclick = () => openMerchantModal(); $('#addCategoryBtn').onclick = () => openCategoryModal();
     $('#peopleMonth').onchange = e => { state.filters.people.month = Number(e.target.value); renderPeople(); };
@@ -1172,6 +1316,8 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
 
   window.FinCard = {
     editPurchase(id) { showPage('newPurchase'); renderPurchaseForm(getById(state.data.purchases, id)); }, deletePurchase,
+    toggleInvoiceChecked(id, checked) { const i = getById(state.data.installments, id); if (i) { i.invoiceChecked = Boolean(checked); saveToStorage(false); renderInvoiceCheck(); } },
+    markInvoiceList(checked) { const { month, year, cardId } = state.filters.invoiceCheck; filterByMonthYear(state.data.installments, month, year).filter(i => cardId === 'all' || i.cardId === cardId).forEach(i => i.invoiceChecked = Boolean(checked)); saveToStorage(false); renderInvoiceCheck(); },
     setInstallmentStatus(id, status) { const i = getById(state.data.installments, id); if (i) { i.status = status; saveToStorage(); renderAll(); } },
     showCardInvoice(id) {
       const card = getById(state.data.cards, id);
@@ -1242,3 +1388,69 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
+
+
+/* YR v27 visual helpers */
+(function(){
+  function syncMobileNav(pageId){
+    document.querySelectorAll(".mobile-nav button").forEach(btn=>{
+      btn.classList.toggle("active", btn.dataset.target === pageId);
+    });
+  }
+
+  function createMobileNav(){
+    if(document.querySelector(".mobile-nav")) return;
+    const nav = document.createElement("nav");
+    nav.className = "mobile-nav";
+    nav.innerHTML = `
+      <button data-target="dashboardPage">⌂<span>Início</span></button>
+      <button data-target="invoiceCheckPage">☑<span>Conferir</span></button>
+      <button data-target="newPurchasePage">＋<span>Novo</span></button>
+      <button data-target="purchasesPage">▣<span>Compras</span></button>
+      <button data-target="settingsPage">•••<span>Mais</span></button>
+    `;
+    document.body.appendChild(nav);
+    nav.addEventListener("click", function(event){
+      const btn = event.target.closest("button[data-target]");
+      if(!btn) return;
+      const target = btn.dataset.target;
+      if(window.FinCard && typeof window.FinCard.showPage === "function"){
+        window.FinCard.showPage(target);
+      } else {
+        document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active", p.id === target));
+      }
+      syncMobileNav(target);
+    });
+  }
+
+  function enhance(){
+    createMobileNav();
+
+    const sidebar = document.querySelector(".sidebar");
+    const menuBtn = document.getElementById("openMobileMenu");
+    if(menuBtn && sidebar && !menuBtn.dataset.yrBound){
+      menuBtn.dataset.yrBound = "1";
+      menuBtn.addEventListener("click", ()=> sidebar.classList.toggle("open"));
+    }
+
+    document.addEventListener("click", function(event){
+      if(window.innerWidth > 850) return;
+      if(!sidebar || !sidebar.classList.contains("open")) return;
+      const inside = event.target.closest(".sidebar");
+      const isMenu = event.target.closest("#openMobileMenu");
+      if(!inside && !isMenu) sidebar.classList.remove("open");
+    });
+
+    const active = document.querySelector(".page.active");
+    if(active) syncMobileNav(active.id);
+
+    const observer = new MutationObserver(()=>{
+      const activePage = document.querySelector(".page.active");
+      if(activePage) syncMobileNav(activePage.id);
+    });
+    document.querySelectorAll(".page").forEach(p=>observer.observe(p,{attributes:true,attributeFilter:["class"]}));
+  }
+
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", enhance);
+  else enhance();
+})();
