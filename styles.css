@@ -707,40 +707,10 @@ input:focus,select:focus,textarea:focus{
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
 
-/* v28: correção de modal fantasma.
-   O modal só aparece quando recebe a classe .active ou quando NÃO está hidden. */
-.modal,
-.modal-overlay,
-.modal-backdrop:not(.active)[hidden],
-.modal-backdrop[hidden] {
-  display: none !important;
-}
 
-.modal.active,
-.modal-overlay.active,
-.modal-backdrop.active {
-  display: grid !important;
-}
+/* YR v30 — polimento seguro sem travar a página */
 
-.modal-backdrop:not(.active) {
-  display: none;
-}
-
-/* Compatibilidade com estrutura antiga de modal */
-#modal:not(.active),
-#appModal:not(.active),
-.generic-modal:not(.active) {
-  display: none !important;
-}
-
-
-/* YR v29 — polimento visual: sidebar, tabelas, botões e modal */
-
-/* Sidebar mais próxima da prévia aprovada */
-.sidebar {
-  width: var(--sidebar);
-}
-
+/* Sidebar com ícones SVG e aparência mais profissional */
 .nav-btn {
   min-height: 48px;
   font-size: 1rem;
@@ -765,11 +735,6 @@ input:focus,select:focus,textarea:focus{
   color: #86efac;
 }
 
-.nav-btn:hover .nav-icon {
-  background: rgba(34,197,94,.12);
-}
-
-/* Evita emojis coloridos antigos ficando com aparência amadora */
 .nav-icon svg {
   width: 18px;
   height: 18px;
@@ -780,7 +745,7 @@ input:focus,select:focus,textarea:focus{
   stroke-linejoin: round;
 }
 
-/* Tabelas mais limpas e consistentes */
+/* Tabelas e botões */
 .table-card {
   padding: 14px;
 }
@@ -810,23 +775,11 @@ th {
   letter-spacing: .01em;
 }
 
-.data-table td,
-.invoice-check-table td,
-td {
-  vertical-align: middle;
-}
-
-.data-table tbody tr,
-.invoice-check-table tbody tr {
-  transition: background .16s ease;
-}
-
 .data-table tbody tr:hover,
 .invoice-check-table tbody tr:hover {
   background: rgba(34,197,94,.045);
 }
 
-/* Botões de ação das tabelas: editar/excluir não ficam mais brancos */
 .data-table button,
 .invoice-check-table button,
 .table-card button,
@@ -846,74 +799,21 @@ td button,
   gap: 6px;
 }
 
-.data-table button:hover,
-.invoice-check-table button:hover,
-.table-card button:hover,
-td button:hover,
-.action-row button:hover,
-.row-actions button:hover {
-  background: rgba(34,197,94,.12);
-  border-color: rgba(34,197,94,.32);
-}
-
-.data-table button[onclick*="edit"],
-.data-table button[data-action*="edit"],
-.table-card button[onclick*="edit"],
-.table-card button[data-action*="edit"] {
-  background: rgba(59,130,246,.13);
-  border-color: rgba(59,130,246,.32);
-  color: #bfdbfe;
-}
-
-.data-table button[onclick*="delete"],
-.data-table button[data-action*="delete"],
-.table-card button[onclick*="delete"],
-.table-card button[data-action*="delete"] {
-  background: rgba(239,68,68,.13);
-  border-color: rgba(239,68,68,.32);
-  color: #fecaca;
-}
-
-/* Compatibilidade com botões que têm apenas texto */
+.edit-action,
 td button:first-of-type:not(.checkbox):not(.icon-button) {
-  background: rgba(59,130,246,.13);
-  border-color: rgba(59,130,246,.32);
-  color: #bfdbfe;
+  background: rgba(59,130,246,.13) !important;
+  border-color: rgba(59,130,246,.32) !important;
+  color: #bfdbfe !important;
 }
 
+.delete-action,
 td button:last-of-type:not(.checkbox):not(.icon-button) {
-  background: rgba(239,68,68,.13);
-  border-color: rgba(239,68,68,.32);
-  color: #fecaca;
+  background: rgba(239,68,68,.13) !important;
+  border-color: rgba(239,68,68,.32) !important;
+  color: #fecaca !important;
 }
 
-/* Modal: por padrão, todo modal fica fechado.
-   Ele só aparece com .active ou .is-open. */
-.modal,
-.modal-overlay,
-.modal-backdrop,
-#modal,
-#appModal,
-.generic-modal {
-  display: none !important;
-}
-
-.modal.active,
-.modal.is-open,
-.modal-overlay.active,
-.modal-overlay.is-open,
-.modal-backdrop.active,
-.modal-backdrop.is-open,
-#modal.active,
-#modal.is-open,
-#appModal.active,
-#appModal.is-open,
-.generic-modal.active,
-.generic-modal.is-open {
-  display: grid !important;
-}
-
-/* Se algum modal antigo usa style inline, a classe ghost-closed vence */
+/* Correção segura: apenas esconde modal literalmente vazio com texto "Modal". */
 .ghost-closed {
   display: none !important;
   visibility: hidden !important;
@@ -922,31 +822,9 @@ td button:last-of-type:not(.checkbox):not(.icon-button) {
 }
 
 @media(max-width:850px){
-  .nav-icon {
-    background: rgba(255,255,255,.04);
-  }
-
   .data-table,
   .invoice-check-table,
   table {
     min-width: 760px;
   }
-
-  .table-card {
-    margin-left: -2px;
-    margin-right: -2px;
-  }
-}
-
-
-.edit-action {
-  background: rgba(59,130,246,.13) !important;
-  border-color: rgba(59,130,246,.32) !important;
-  color: #bfdbfe !important;
-}
-
-.delete-action {
-  background: rgba(239,68,68,.13) !important;
-  border-color: rgba(239,68,68,.32) !important;
-  color: #fecaca !important;
 }

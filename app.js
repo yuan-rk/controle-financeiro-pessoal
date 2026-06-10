@@ -1456,34 +1456,8 @@ if ('serviceWorker' in navigator) {
 })();
 
 
-/* YR v28: garante que nenhum modal fantasma fique aberto ao carregar */
-(function(){
-  function closeGhostModals(){
-    const candidates = document.querySelectorAll('.modal, .modal-overlay, .modal-backdrop, #modal, #appModal, .generic-modal');
-    candidates.forEach(el => {
-      const hasDialogContent = el.querySelector('form, input, select, textarea, button[data-confirm], .modal-body');
-      const isIntentionallyActive = el.classList.contains('active') || el.getAttribute('aria-modal') === 'true';
-      const text = (el.textContent || '').trim().toLowerCase();
 
-      if (!isIntentionallyActive || text === 'modal' || !hasDialogContent) {
-        el.classList.remove('active');
-        el.setAttribute('hidden', '');
-        el.style.display = 'none';
-      }
-    });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', closeGhostModals);
-  } else {
-    closeGhostModals();
-  }
-
-  window.addEventListener('pageshow', closeGhostModals);
-})();
-
-
-/* YR v29 — ícones profissionais e correção forte do modal fantasma */
+/* YR v30 — melhorias seguras */
 (function(){
   const icons = {
     dashboardPage: '<svg viewBox="0 0 24 24"><path d="M4 13.5 12 6l8 7.5"/><path d="M6.5 12.5V20h11v-7.5"/><path d="M10 20v-5h4v5"/></svg>',
@@ -1492,9 +1466,9 @@ if ('serviceWorker' in navigator) {
     installmentsPage: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M3 10h18"/></svg>',
     invoiceCheckPage: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="m8 12 2.5 2.5L16 9"/></svg>',
     cardsPage: '<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/></svg>',
-    peoplePage: '<svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>',
+    peoplePage: '<svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
     paymentsPage: '<svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M17 7.5c-.8-1.1-2.2-1.8-4.2-1.8-2.3 0-4 .9-4 2.7 0 4.4 8.7 1.8 8.7 6.5 0 1.9-1.8 3.4-4.7 3.4-2.2 0-3.9-.8-4.8-2.1"/></svg>',
-    merchantsPage: '<svg viewBox="0 0 24 24"><path d="M4 10h16"/><path d="M5 10l1-5h12l1 5"/><path d="M6 10v9h12v-9"/><path d="M9 19v-5h6v5"/></svg>',
+    merchantsPage: '<svg viewBox="0 0 24 24"><path d="M4 10h16"/><path d="M5 10l1-5h12l1 5"/><path d="M6 10v9h12v-9"/></svg>',
     categoriesPage: '<svg viewBox="0 0 24 24"><path d="M20.5 13.5 13 21 3 11V3h8l9.5 9.5a1.4 1.4 0 0 1 0 2Z"/><path d="M7.5 7.5h.01"/></svg>',
     settingsPage: '<svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3a2 2 0 1 1 4 0v.1A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.23.4.59.73 1 .9.34.13.7.2 1.1.2h.1a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.1.4c-.41.29-.73.63-1 1Z"/></svg>'
   };
@@ -1519,85 +1493,34 @@ if ('serviceWorker' in navigator) {
     return 'dashboardPage';
   }
 
-  function replaceSidebarIcons(){
+  function polish(){
     document.querySelectorAll('.nav-btn').forEach(btn => {
       const icon = btn.querySelector('.nav-icon');
       if(!icon) return;
       const target = btn.dataset.target || btn.getAttribute('data-page') || targetFromLabel(btn.textContent);
       if(icons[target]) icon.innerHTML = icons[target];
     });
-  }
 
-  function closeGhostModals(){
-    const selectors = [
-      '.modal',
-      '.modal-overlay',
-      '.modal-backdrop',
-      '#modal',
-      '#appModal',
-      '.generic-modal',
-      '[role="dialog"]'
-    ].join(',');
-
-    document.querySelectorAll(selectors).forEach(el => {
-      const text = (el.textContent || '').trim().toLowerCase();
-      const hasUsefulContent = !!el.querySelector('form, input, select, textarea, .modal-body, [data-modal-content], .smart-form');
-      const explicitlyActive = el.classList.contains('active') || el.classList.contains('is-open') || el.getAttribute('aria-modal') === 'true';
-
-      if(text === 'modal' || (!explicitlyActive && !hasUsefulContent)) {
-        el.classList.remove('active','is-open');
-        el.classList.add('ghost-closed');
-        el.setAttribute('hidden','');
-        el.style.setProperty('display','none','important');
-        el.style.setProperty('visibility','hidden','important');
-        el.style.setProperty('opacity','0','important');
-        el.style.setProperty('pointer-events','none','important');
-      }
-    });
-
-    // Se sobrou overlay órfão escurecendo a tela, remove a interferência.
-    document.querySelectorAll('body > div, body > section').forEach(el => {
-      const text = (el.textContent || '').trim().toLowerCase();
-      const st = getComputedStyle(el);
-      const coversScreen = (st.position === 'fixed' || st.position === 'absolute') && parseInt(st.zIndex || '0', 10) >= 50;
-      if(coversScreen && text === 'modal') {
-        el.classList.add('ghost-closed');
-        el.setAttribute('hidden','');
-        el.style.setProperty('display','none','important');
-      }
-    });
-  }
-
-  function enhanceActionButtons(){
     document.querySelectorAll('td button, .table-card button').forEach(btn => {
       const text = normalizeText(btn.textContent);
       if(text.includes('editar')) btn.classList.add('edit-action');
       if(text.includes('excluir') || text.includes('apagar') || text.includes('deletar')) btn.classList.add('delete-action');
     });
+
+    // Só remove o modal se ele for literalmente o placeholder fantasma "Modal".
+    document.querySelectorAll('.modal, .modal-backdrop, .modal-overlay, [role="dialog"]').forEach(el => {
+      const text = (el.textContent || '').trim().toLowerCase();
+      if(text === 'modal') {
+        el.classList.add('ghost-closed');
+        el.setAttribute('hidden','');
+      }
+    });
   }
 
-  function runV29Polish(){
-    replaceSidebarIcons();
-    closeGhostModals();
-    enhanceActionButtons();
-  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', polish);
+  else polish();
 
-  if(document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', runV29Polish);
-  } else {
-    runV29Polish();
-  }
-
-  window.addEventListener('load', runV29Polish);
-  window.addEventListener('pageshow', runV29Polish);
-  window.addEventListener('resize', closeGhostModals);
-
-  const mo = new MutationObserver(() => {
-    replaceSidebarIcons();
-    enhanceActionButtons();
-    closeGhostModals();
-  });
-  if(document.documentElement) {
-    mo.observe(document.documentElement, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
-  }
+  window.addEventListener('load', polish);
+  window.addEventListener('pageshow', polish);
+  setTimeout(polish, 600);
 })();
