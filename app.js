@@ -2,7 +2,7 @@
    O sistema usa Supabase para login e banco online. O LocalStorage continua
    como cache/backup local para melhorar a experiência e facilitar migração. */
 (() => {
-  const STORAGE_KEY = 'fincard-pro-data-v1';
+  const STORAGE_KEY = 'fincard-pro-data-v31';
   const SUPABASE_URL = 'https://xmhypvgggtelgwcbklen.supabase.co';
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable__dpSFfjN3AoKThHeE4Xf3A_uUz-ywx5';
   const today = new Date();
@@ -1142,7 +1142,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=25" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=31" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -1383,14 +1383,14 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=25').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=31').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
 }
 
 
-/* YR v27 visual helpers */
+/* YR v31 visual helpers */
 (function(){
   function syncMobileNav(pageId){
     document.querySelectorAll(".mobile-nav button").forEach(btn=>{
@@ -1457,18 +1457,18 @@ if ('serviceWorker' in navigator) {
 
 
 
-/* YR v30 — melhorias seguras */
+/* YR v31 — melhorias seguras */
 (function(){
   const icons = {
-    dashboardPage: '<svg viewBox="0 0 24 24"><path d="M4 13.5 12 6l8 7.5"/><path d="M6.5 12.5V20h11v-7.5"/><path d="M10 20v-5h4v5"/></svg>',
-    newPurchasePage: '<svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>',
+    dashboardPage: '<svg viewBox="0 0 24 24"><path d="M4 13.5 12 6l8 7.5"/><path d="M6.5 12.5V20h11v-7.5"/><path d="M10 20v-5h4v31"/></svg>',
+    newPurchasePage: '<svg viewBox="0 0 24 24"><path d="M12 5v31"/><path d="M5 12h14"/></svg>',
     purchasesPage: '<svg viewBox="0 0 24 24"><path d="M7 7h10"/><path d="M7 12h10"/><path d="M7 17h6"/><rect x="4" y="3" width="16" height="18" rx="2"/></svg>',
-    installmentsPage: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M3 10h18"/></svg>',
+    installmentsPage: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v31"/><path d="M8 3v31"/><path d="M3 10h18"/></svg>',
     invoiceCheckPage: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="m8 12 2.5 2.5L16 9"/></svg>',
     cardsPage: '<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/></svg>',
     peoplePage: '<svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
-    paymentsPage: '<svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M17 7.5c-.8-1.1-2.2-1.8-4.2-1.8-2.3 0-4 .9-4 2.7 0 4.4 8.7 1.8 8.7 6.5 0 1.9-1.8 3.4-4.7 3.4-2.2 0-3.9-.8-4.8-2.1"/></svg>',
-    merchantsPage: '<svg viewBox="0 0 24 24"><path d="M4 10h16"/><path d="M5 10l1-5h12l1 5"/><path d="M6 10v9h12v-9"/></svg>',
+    paymentsPage: '<svg viewBox="0 0 24 24"><path d="M12 3v31"/><path d="M17 7.5c-.8-1.1-2.2-1.8-4.2-1.8-2.3 0-4 .9-4 2.7 0 4.4 8.7 1.8 8.7 6.5 0 1.9-1.8 3.4-4.7 3.4-2.2 0-3.9-.8-4.8-2.1"/></svg>',
+    merchantsPage: '<svg viewBox="0 0 24 24"><path d="M4 10h16"/><path d="M5 10l1-5h12l1 5"/><path d="M6 10v31h12v-9"/></svg>',
     categoriesPage: '<svg viewBox="0 0 24 24"><path d="M20.5 13.5 13 21 3 11V3h8l9.5 9.5a1.4 1.4 0 0 1 0 2Z"/><path d="M7.5 7.5h.01"/></svg>',
     settingsPage: '<svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3a2 2 0 1 1 4 0v.1A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.23.4.59.73 1 .9.34.13.7.2 1.1.2h.1a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.1.4c-.41.29-.73.63-1 1Z"/></svg>'
   };
@@ -1523,4 +1523,21 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', polish);
   window.addEventListener('pageshow', polish);
   setTimeout(polish, 600);
+})();
+
+
+/* YR v31: PWA temporariamente desativado para limpar cache quebrado */
+(function(){
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.getRegistrations()
+      .then(function(registrations){
+        registrations.forEach(function(reg){ reg.unregister(); });
+      })
+      .catch(function(){});
+  }
+  if (window.caches && caches.keys) {
+    caches.keys()
+      .then(function(keys){ keys.forEach(function(key){ caches.delete(key); }); })
+      .catch(function(){});
+  }
 })();
