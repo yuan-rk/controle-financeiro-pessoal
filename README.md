@@ -119,3 +119,9 @@ Esta versão inclui manifest.json, sw.js e ícones para instalação na tela ini
 - Limita canvas e altura dos gráficos no mobile.
 - Ajusta legenda dos gráficos para telas pequenas.
 - Mantém todas as melhorias da v25.10.
+
+
+## v25.12 toque na aba ativa volta ao topo
+- Ao tocar na aba atual novamente, a página rola suavemente para o topo.
+- Ao trocar de página, a nova aba também abre no topo.
+- Mantém todas as melhorias da v25.11.

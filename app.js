@@ -1,4 +1,4 @@
-const YR_FINANCAS_VERSION = 'v25.11-mobile-charts-fix';
+const YR_FINANCAS_VERSION = 'v25.12-scroll-to-top';
 /* YR Finanças - controle de faturas com sincronização opcional em nuvem.
    O sistema usa Supabase para login e banco online. O LocalStorage continua
    como cache/backup local para melhorar a experiência e facilitar migração. */
@@ -460,7 +460,34 @@ const YR_FINANCAS_VERSION = 'v25.11-mobile-charts-fix';
     return { installments, totalInvoice, mine, others, received, pending: Math.max(0, others - received), purchaseCount: new Set(installments.map(i => i.purchaseId)).size, activeInstallments: installments.length, activeCards: getActiveCards().length };
   }
 
-  function renderNav() {
+  
+  function scrollCurrentViewToTop(smooth = true) {
+    const behavior = smooth ? 'smooth' : 'auto';
+    try { window.scrollTo({ top: 0, behavior }); } catch (error) { window.scrollTo(0, 0); }
+    try { document.documentElement.scrollTo({ top: 0, behavior }); } catch (error) { document.documentElement.scrollTop = 0; }
+    try { document.body.scrollTo({ top: 0, behavior }); } catch (error) { document.body.scrollTop = 0; }
+
+    const containers = [
+      document.querySelector('.main-content'),
+      document.querySelector('.page.active'),
+      document.querySelector('#dashboardPage'),
+      document.querySelector('#purchasesPage'),
+      document.querySelector('#installmentsPage'),
+      document.querySelector('#newPurchasePage'),
+      document.querySelector('#cardsPage'),
+      document.querySelector('#peoplePage'),
+      document.querySelector('#paymentsPage'),
+      document.querySelector('#merchantsPage'),
+      document.querySelector('#categoriesPage'),
+      document.querySelector('#settingsPage')
+    ].filter(Boolean);
+
+    containers.forEach(el => {
+      try { el.scrollTo({ top: 0, behavior }); } catch (error) { el.scrollTop = 0; }
+    });
+  }
+
+function renderNav() {
     const make = (items) => items.map(([id, icon, label]) => {
       const active = state.currentPage === id;
       return `<button class="nav-btn ${active ? 'active' : ''}" data-page="${id}"><span class="nav-icon">${icon}</span><span>${label}</span></button>`;
@@ -470,7 +497,17 @@ const YR_FINANCAS_VERSION = 'v25.11-mobile-charts-fix';
     $('#drawerNav').innerHTML = make(menu);
     $('#mobileNav').innerHTML = make(menu);
 
-    $$('.nav-btn').forEach(btn => btn.onclick = () => showPage(btn.dataset.page));
+    $$('.nav-btn').forEach(btn => btn.onclick = () => {
+      const targetPage = btn.dataset.page;
+      if (targetPage === state.currentPage) {
+        $('#mobileDrawer').classList.remove('show');
+        document.body.classList.remove('sidebar-open');
+        document.body.classList.remove('mobile-more-open');
+        scrollCurrentViewToTop(true);
+        return;
+      }
+      showPage(targetPage);
+    });
   }
 
   function showPage(page) {
@@ -483,6 +520,7 @@ const YR_FINANCAS_VERSION = 'v25.11-mobile-charts-fix';
     document.body.classList.remove('mobile-more-open');
     renderNav();
     renderAll(false);
+    requestAnimationFrame(() => scrollCurrentViewToTop(false));
   }
 
   function fillMonthYear(selectMonth, selectYear, selectedMonth, selectedYear, allowAll = false) {
@@ -1065,7 +1103,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=2511" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=2512" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -1315,7 +1353,7 @@ function bindEvents() {
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=2511').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=2512').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
@@ -1331,16 +1369,16 @@ if ('serviceWorker' in navigator) {
     const closeBtn = document.getElementById('closeMobileMenu');
     if(!drawer) return;
 
-    if(closeBtn && !closeBtn.dataset.v2511Bound){
-      closeBtn.dataset.v2511Bound = '1';
+    if(closeBtn && !closeBtn.dataset.v2512Bound){
+      closeBtn.dataset.v2512Bound = '1';
       closeBtn.addEventListener('click', function(){
         drawer.classList.remove('show');
         document.body.classList.remove('mobile-more-open');
       });
     }
 
-    if(!drawer.dataset.v2511Bound){
-      drawer.dataset.v2511Bound = '1';
+    if(!drawer.dataset.v2512Bound){
+      drawer.dataset.v2512Bound = '1';
       drawer.addEventListener('click', function(event){
         if(event.target === drawer){
           drawer.classList.remove('show');
