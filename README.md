@@ -73,3 +73,10 @@ Ajuste focado no telefone:
 - botão "Mais" abrindo os demais itens do menu;
 - botões e campos maiores no celular;
 - cards e espaçamentos mobile mais confortáveis.
+
+
+## v25.2 mobile fix
+Correção da v25.1:
+- A barra inferior com "Mais" aparece apenas em telefone.
+- PC e tablet grande não mostram o botão "Mais".
+- O botão "Mais" abre o menu lateral no telefone.

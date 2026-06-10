@@ -2230,7 +2230,7 @@ button[aria-label="Abrir navegação"],
 
 
 
-/* v251: relatório mensal */
+/* v252: relatório mensal */
 .settings-card .settings-actions{
   display:flex;
   flex-wrap:wrap;
@@ -2471,5 +2471,97 @@ body.touch-layout .drawer-panel .nav-btn{
   html.touch-layout table,
   body.touch-layout table{
     min-width:720px!important;
+  }
+}
+
+
+/* v25.2 — correção: barra inferior apenas no telefone */
+
+/* PC/tablet grande: nunca mostra a barra inferior, mesmo se o aparelho tiver touch */
+@media (min-width: 701px){
+  html.touch-layout .mobile-nav,
+  body.touch-layout .mobile-nav,
+  html.touch-layout #mobileNav,
+  body.touch-layout #mobileNav,
+  .mobile-nav,
+  #mobileNav{
+    display:none!important;
+    visibility:hidden!important;
+    opacity:0!important;
+    pointer-events:none!important;
+  }
+
+  html.touch-layout .mobile-drawer,
+  body.touch-layout .mobile-drawer,
+  .mobile-drawer{
+    display:none!important;
+  }
+}
+
+/* Telefone: barra inferior aparece e o drawer do botão Mais funciona */
+@media (max-width: 700px){
+  html.touch-layout .mobile-nav,
+  body.touch-layout .mobile-nav,
+  html.touch-layout #mobileNav,
+  body.touch-layout #mobileNav,
+  .mobile-nav,
+  #mobileNav{
+    display:grid!important;
+    visibility:visible!important;
+    opacity:1!important;
+    pointer-events:auto!important;
+  }
+
+  .mobile-drawer{
+    display:none!important;
+    position:fixed!important;
+    inset:0!important;
+    background:rgba(2,6,23,.72)!important;
+    z-index:10000!important;
+    backdrop-filter:blur(8px)!important;
+  }
+
+  .mobile-drawer.show{
+    display:block!important;
+    visibility:visible!important;
+    opacity:1!important;
+    pointer-events:auto!important;
+  }
+
+  .mobile-drawer.show .drawer-panel{
+    display:block!important;
+    visibility:visible!important;
+    opacity:1!important;
+    pointer-events:auto!important;
+  }
+
+  .drawer-panel{
+    width:min(360px,88vw)!important;
+    height:100%!important;
+    background:var(--card)!important;
+    border-right:1px solid var(--border)!important;
+    padding:18px 16px 22px!important;
+    overflow:auto!important;
+    box-shadow:24px 0 60px rgba(0,0,0,.34)!important;
+  }
+
+  .drawer-panel .nav-btn{
+    width:100%!important;
+    min-height:52px!important;
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    gap:12px!important;
+    padding:12px 14px!important;
+    border-radius:14px!important;
+    font-size:.95rem!important;
+  }
+
+  .drawer-panel .nav-btn span:not(.nav-icon){
+    display:block!important;
+    font-size:.95rem!important;
+    text-align:left!important;
+    white-space:normal!important;
   }
 }

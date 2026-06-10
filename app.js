@@ -1025,7 +1025,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=251" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=252" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -1260,7 +1260,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=251').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=252').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
@@ -1273,12 +1273,12 @@ if ('serviceWorker' in navigator) {
     const drawer = document.getElementById('mobileDrawer');
     const closeBtn = document.getElementById('closeMobileMenu');
     if(!drawer) return;
-    if(closeBtn && !closeBtn.dataset.v251Bound){
-      closeBtn.dataset.v251Bound = '1';
+    if(closeBtn && !closeBtn.dataset.v252Bound){
+      closeBtn.dataset.v252Bound = '1';
       closeBtn.addEventListener('click', () => drawer.classList.remove('show'));
     }
-    if(!drawer.dataset.v251Bound){
-      drawer.dataset.v251Bound = '1';
+    if(!drawer.dataset.v252Bound){
+      drawer.dataset.v252Bound = '1';
       drawer.addEventListener('click', (event) => {
         if(event.target === drawer) drawer.classList.remove('show');
       });
@@ -1290,4 +1290,53 @@ if ('serviceWorker' in navigator) {
   } else {
     bindMobileDrawerBackdrop();
   }
+})();
+
+
+/* v25.2: botão Mais robusto apenas para telefone */
+(function(){
+  function setupMoreButton(){
+    const mobileNav = document.getElementById('mobileNav');
+    const drawer = document.getElementById('mobileDrawer');
+    const closeBtn = document.getElementById('closeMobileMenu');
+    if(!mobileNav || !drawer) return;
+
+    if(!mobileNav.dataset.v252Bound){
+      mobileNav.dataset.v252Bound = '1';
+      mobileNav.addEventListener('click', function(event){
+        const btn = event.target.closest('.nav-btn[data-page="more"], .more-btn, [data-role="more"]');
+        if(!btn) return;
+        event.preventDefault();
+        event.stopPropagation();
+        drawer.classList.add('show');
+      }, true);
+    }
+
+    if(closeBtn && !closeBtn.dataset.v252Bound){
+      closeBtn.dataset.v252Bound = '1';
+      closeBtn.addEventListener('click', function(){
+        drawer.classList.remove('show');
+      });
+    }
+
+    if(!drawer.dataset.v252BackdropBound){
+      drawer.dataset.v252BackdropBound = '1';
+      drawer.addEventListener('click', function(event){
+        if(event.target === drawer) drawer.classList.remove('show');
+      });
+    }
+
+    // Se estiver em PC/tablet grande, fecha qualquer drawer aberto e deixa a barra invisível via CSS.
+    if(window.innerWidth > 700){
+      drawer.classList.remove('show');
+    }
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', setupMoreButton);
+  } else {
+    setupMoreButton();
+  }
+  window.addEventListener('load', setupMoreButton);
+  window.addEventListener('resize', setupMoreButton);
 })();
