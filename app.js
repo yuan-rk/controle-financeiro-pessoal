@@ -440,11 +440,34 @@
   }
 
   function renderNav() {
-    const make = (items) => items.map(([id, icon, label]) => `<button class="nav-btn ${state.currentPage === id ? 'active' : ''}" data-page="${id}"><span class="nav-icon">${icon}</span><span>${label}</span></button>`).join('');
+    const make = (items, opts = {}) => items.map(([id, icon, label]) => {
+      const isMore = id === 'more';
+      const active = isMore
+        ? !['dashboard','newPurchase','purchases','installments'].includes(state.currentPage)
+        : state.currentPage === id;
+      return `<button class="nav-btn ${active ? 'active' : ''} ${isMore ? 'more-btn' : ''}" data-page="${id}" ${isMore ? 'data-role="more"' : ''}><span class="nav-icon">${icon}</span><span>${label}</span></button>`;
+    }).join('');
+
+    const mobileMenu = [
+      ['dashboard', '⌂', 'Início'],
+      ['newPurchase', '＋', 'Nova compra'],
+      ['purchases', '▣', 'Compras'],
+      ['installments', '▤', 'Parcelas'],
+      ['more', '⋯', 'Mais']
+    ];
+
     $('#desktopNav').innerHTML = make(menu);
     $('#drawerNav').innerHTML = make(menu);
-    $('#mobileNav').innerHTML = make(menu);
-    $$('.nav-btn').forEach(btn => btn.onclick = () => showPage(btn.dataset.page));
+    $('#mobileNav').innerHTML = make(mobileMenu);
+
+    $$('.nav-btn').forEach(btn => btn.onclick = () => {
+      const page = btn.dataset.page;
+      if (page === 'more') {
+        $('#mobileDrawer').classList.add('show');
+        return;
+      }
+      showPage(page);
+    });
   }
 
   function showPage(page) {
@@ -1002,7 +1025,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=25" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=251" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -1237,8 +1260,34 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=25').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=251').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
 }
+
+
+/* v25.1 mobile: ajustes seguros para o telefone */
+(function(){
+  function bindMobileDrawerBackdrop(){
+    const drawer = document.getElementById('mobileDrawer');
+    const closeBtn = document.getElementById('closeMobileMenu');
+    if(!drawer) return;
+    if(closeBtn && !closeBtn.dataset.v251Bound){
+      closeBtn.dataset.v251Bound = '1';
+      closeBtn.addEventListener('click', () => drawer.classList.remove('show'));
+    }
+    if(!drawer.dataset.v251Bound){
+      drawer.dataset.v251Bound = '1';
+      drawer.addEventListener('click', (event) => {
+        if(event.target === drawer) drawer.classList.remove('show');
+      });
+    }
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', bindMobileDrawerBackdrop);
+  } else {
+    bindMobileDrawerBackdrop();
+  }
+})();
