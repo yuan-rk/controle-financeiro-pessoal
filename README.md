@@ -92,3 +92,10 @@ Esta versão inclui manifest.json, sw.js e ícones para instalação na tela ini
 - Mantém as mudanças da v25.6.
 - Força o navegador a baixar `styles.css?v=257` e `app.js?v=257`.
 - Corrige o caso em que o telefone carregava CSS novo, mas mantinha app.js antigo com o botão "Mais".
+
+
+## v25.8 lembrar mês do dashboard
+- Lembra apenas o mês escolhido no dashboard.
+- O ano continua automático pelo ano atual.
+- Exemplo: se você deixou em julho, ao reabrir volta em julho do ano atual.
+- Não altera banco, Supabase, compras, parcelas ou regras financeiras.
