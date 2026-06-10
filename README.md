@@ -99,3 +99,10 @@ Esta versão inclui manifest.json, sw.js e ícones para instalação na tela ini
 - O ano continua automático pelo ano atual.
 - Exemplo: se você deixou em julho, ao reabrir volta em julho do ano atual.
 - Não altera banco, Supabase, compras, parcelas ou regras financeiras.
+
+
+## v25.9 correção dos filtros do dashboard
+- Corrige a troca de mês/ano/forma no dashboard.
+- Ao mudar o mês, o dashboard recalcula imediatamente.
+- Continua lembrando apenas o mês escolhido.
+- O ano continua automático ao abrir o app.

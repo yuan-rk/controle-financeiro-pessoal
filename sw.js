@@ -1,16 +1,16 @@
-const CACHE_NAME = 'yr-financas-v258-remember-month';
+const CACHE_NAME = 'yr-financas-v259-dashboard-filter-fix';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
-  './styles.css?v=258',
+  './styles.css?v=259',
   './app.js',
-  './app.js?v=258',
+  './app.js?v=259',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './icon-192.png?v=258',
-  './icon-512.png?v=258'
+  './icon-192.png?v=259',
+  './icon-512.png?v=259'
 ];
 
 self.addEventListener('install', event => {

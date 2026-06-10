@@ -1,4 +1,4 @@
-const YR_FINANCAS_VERSION = 'v25.8-remember-month';
+const YR_FINANCAS_VERSION = 'v25.9-dashboard-filter-fix';
 /* YR Finanças - controle de faturas com sincronização opcional em nuvem.
    O sistema usa Supabase para login e banco online. O LocalStorage continua
    como cache/backup local para melhorar a experiência e facilitar migração. */
@@ -1029,7 +1029,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=258" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=259" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -1170,7 +1170,22 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     showAuthGate();
   }
 
-  function bindEvents() {
+  
+  function applyDashboardFiltersAndRender() {
+    const monthEl = $('#dashboardMonth');
+    const yearEl = $('#dashboardYear');
+    const cardEl = $('#dashboardCard');
+    if (!monthEl || !yearEl || !cardEl) return;
+
+    state.filters.dashboard.month = monthEl.value;
+    state.filters.dashboard.year = yearEl.value;
+    state.filters.dashboard.cardId = cardEl.value;
+
+    rememberDashboardMonth(state.filters.dashboard.month);
+    renderAll(false);
+  }
+
+function bindEvents() {
 
     const toggleSidebarMobile = (force = null) => {
       const open = force === null ? !document.body.classList.contains('sidebar-open') : force;
@@ -1178,11 +1193,10 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     };
     
     
-    $('#dashboardMonth').onchange = e => { state.filters.dashboard.month = Number(e.target.value); renderDashboard(); };
-    $('#dashboardYear').onchange = e => { state.filters.dashboard.year = Number(e.target.value); renderDashboard(); };
-    $('#dashboardCard').onchange = e => { state.filters.dashboard.cardId = e.target.value; renderDashboard(); };
-    $('#dashboardMonth').onchange = () => rememberDashboardMonth($('#dashboardMonth').value);
-    $('#refreshDashboard').onclick = renderDashboard;
+    $('#dashboardMonth').onchange = applyDashboardFiltersAndRender;
+    $('#dashboardYear').onchange = applyDashboardFiltersAndRender;
+    $('#dashboardCard').onchange = applyDashboardFiltersAndRender;
+    $('#refreshDashboard').onclick = applyDashboardFiltersAndRender;
     $$('[data-action="new-purchase"]').forEach(btn => btn.onclick = () => showPage('newPurchase'));
     $('#addCardBtn').onclick = () => openCardModal(); $('#addPersonBtn').onclick = () => openPersonModal(); $('#addPaymentBtn').onclick = () => openPaymentModal(); $('#addMerchantBtn').onclick = () => openMerchantModal(); $('#addCategoryBtn').onclick = () => openCategoryModal();
     $('#peopleMonth').onchange = e => { state.filters.people.month = Number(e.target.value); renderPeople(); };
@@ -1265,7 +1279,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=258').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=259').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
@@ -1281,16 +1295,16 @@ if ('serviceWorker' in navigator) {
     const closeBtn = document.getElementById('closeMobileMenu');
     if(!drawer) return;
 
-    if(closeBtn && !closeBtn.dataset.v258Bound){
-      closeBtn.dataset.v258Bound = '1';
+    if(closeBtn && !closeBtn.dataset.v259Bound){
+      closeBtn.dataset.v259Bound = '1';
       closeBtn.addEventListener('click', function(){
         drawer.classList.remove('show');
         document.body.classList.remove('mobile-more-open');
       });
     }
 
-    if(!drawer.dataset.v258Bound){
-      drawer.dataset.v258Bound = '1';
+    if(!drawer.dataset.v259Bound){
+      drawer.dataset.v259Bound = '1';
       drawer.addEventListener('click', function(event){
         if(event.target === drawer){
           drawer.classList.remove('show');
