@@ -2230,7 +2230,7 @@ button[aria-label="Abrir navegação"],
 
 
 
-/* v2510: relatório mensal */
+/* v2511: relatório mensal */
 .settings-card .settings-actions{
   display:flex;
   flex-wrap:wrap;
@@ -2855,4 +2855,88 @@ button[aria-label="Abrir navegação"],
   color:#0f172a!important;
   background:rgba(15,23,42,.05)!important;
   border-color:#dbe3ef!important;
+}
+
+
+/* v25.11 — correção dos gráficos no telefone */
+
+/* Evita qualquer estouro horizontal causado por canvas/legenda */
+html, body{
+  max-width:100vw;
+  overflow-x:hidden;
+}
+
+.chart-grid,
+.panel,
+.finance-overview-section,
+.overview-grid,
+.overview-side{
+  min-width:0!important;
+}
+
+.panel canvas,
+.chart-grid canvas,
+.finance-overview-section canvas{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+}
+
+/* Chart.js cria inline height/width; no mobile precisamos limitar pelo card */
+@media (max-width:700px){
+  .chart-grid{
+    grid-template-columns:1fr!important;
+    gap:14px!important;
+    overflow:hidden!important;
+  }
+
+  .chart-grid .panel,
+  .panel:has(canvas){
+    overflow:hidden!important;
+    min-width:0!important;
+  }
+
+  .chart-grid canvas,
+  .panel canvas{
+    width:100%!important;
+    max-width:100%!important;
+    height:260px!important;
+    max-height:260px!important;
+    margin:0 auto!important;
+  }
+
+  /* Gráficos de rosca/pizza ficam melhores um pouco menores */
+  .chart-grid .panel:nth-child(2) canvas,
+  .chart-grid .panel canvas[id*="pie"],
+  .chart-grid .panel canvas[id*="donut"],
+  .chart-grid .panel canvas[id*="payment"],
+  canvas[id*="received"],
+  canvas[id*="pending"]{
+    height:240px!important;
+    max-height:240px!important;
+  }
+
+  /* Se o painel tiver legenda do Chart.js muito larga, não deixa vazar */
+  .chart-grid .panel > div,
+  .panel > div{
+    max-width:100%!important;
+    overflow:hidden!important;
+  }
+}
+
+/* Em celulares menores ainda, reduz um pouco mais */
+@media (max-width:380px){
+  .chart-grid canvas,
+  .panel canvas{
+    height:230px!important;
+    max-height:230px!important;
+  }
+
+  .chart-grid .panel:nth-child(2) canvas,
+  canvas[id*="received"],
+  canvas[id*="pending"]{
+    height:220px!important;
+    max-height:220px!important;
+  }
 }

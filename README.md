@@ -112,3 +112,10 @@ Esta versão inclui manifest.json, sw.js e ícones para instalação na tela ini
 - Corrige contraste e fundos no tema claro.
 - Remove o efeito de camada cinza/escura na visão geral financeira.
 - Mantém todas as correções da v25.9.
+
+
+## v25.11 correção dos gráficos mobile
+- Corrige gráficos vazando para fora do card no telefone.
+- Limita canvas e altura dos gráficos no mobile.
+- Ajusta legenda dos gráficos para telas pequenas.
+- Mantém todas as melhorias da v25.10.

@@ -1,4 +1,4 @@
-const YR_FINANCAS_VERSION = 'v25.10-light-theme-fix';
+const YR_FINANCAS_VERSION = 'v25.11-mobile-charts-fix';
 /* YR Finanças - controle de faturas com sincronização opcional em nuvem.
    O sistema usa Supabase para login e banco online. O LocalStorage continua
    como cache/backup local para melhorar a experiência e facilitar migração. */
@@ -648,7 +648,43 @@ const YR_FINANCAS_VERSION = 'v25.10-light-theme-fix';
     return items.reduce((acc, item) => { const k = keyFn(item); acc[k] = (acc[k] || 0) + valueFn(item); return acc; }, {});
   }
 
-  function updateCharts(t) {
+  
+  function mobileChartOptions(extra = {}) {
+    const isPhone = window.matchMedia('(max-width: 700px)').matches;
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: isPhone ? 4 : 8 },
+      plugins: {
+        legend: {
+          position: isPhone ? 'bottom' : 'top',
+          labels: {
+            boxWidth: isPhone ? 12 : 18,
+            padding: isPhone ? 10 : 16,
+            font: { size: isPhone ? 11 : 12 }
+          }
+        },
+        tooltip: extra.tooltip || {}
+      },
+      ...extra
+    };
+  }
+
+
+  function applyMobileChartDefaults() {
+    if (!window.Chart) return;
+    const isPhone = window.matchMedia('(max-width: 700px)').matches;
+    Chart.defaults.responsive = true;
+    Chart.defaults.maintainAspectRatio = false;
+    if (Chart.defaults.plugins && Chart.defaults.plugins.legend) {
+      Chart.defaults.plugins.legend.position = isPhone ? 'bottom' : 'top';
+      Chart.defaults.plugins.legend.labels.boxWidth = isPhone ? 12 : 18;
+      Chart.defaults.plugins.legend.labels.font = { size: isPhone ? 11 : 12 };
+    }
+  }
+
+function updateCharts(t) {
+    applyMobileChartDefaults();
     const lastMonths = Array.from({ length: 6 }, (_, idx) => addMonths(`${state.filters.dashboard.year}-${String(state.filters.dashboard.month).padStart(2,'0')}-01`, idx - 5));
     const evoLabels = lastMonths.map(d => `${monthName(d.getMonth()+1).slice(0,3)}/${String(d.getFullYear()).slice(2)}`);
     const evoData = lastMonths.map(d => state.data.installments.filter(i => i.month === d.getMonth()+1 && i.year === d.getFullYear()).reduce((s,i)=>s+money(i.amount),0));
@@ -1029,7 +1065,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=2510" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=2511" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -1279,7 +1315,7 @@ function bindEvents() {
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=2510').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=2511').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
@@ -1295,16 +1331,16 @@ if ('serviceWorker' in navigator) {
     const closeBtn = document.getElementById('closeMobileMenu');
     if(!drawer) return;
 
-    if(closeBtn && !closeBtn.dataset.v2510Bound){
-      closeBtn.dataset.v2510Bound = '1';
+    if(closeBtn && !closeBtn.dataset.v2511Bound){
+      closeBtn.dataset.v2511Bound = '1';
       closeBtn.addEventListener('click', function(){
         drawer.classList.remove('show');
         document.body.classList.remove('mobile-more-open');
       });
     }
 
-    if(!drawer.dataset.v2510Bound){
-      drawer.dataset.v2510Bound = '1';
+    if(!drawer.dataset.v2511Bound){
+      drawer.dataset.v2511Bound = '1';
       drawer.addEventListener('click', function(event){
         if(event.target === drawer){
           drawer.classList.remove('show');
