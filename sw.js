@@ -1,14 +1,16 @@
-const CACHE_NAME = 'yr-financas-v2564';
+const CACHE_NAME = 'yr-financas-v257-cachefix';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
+  './styles.css?v=257',
   './app.js',
+  './app.js?v=257',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './icon-192.png?v=256',
-  './icon-512.png?v=256'
+  './icon-192.png?v=257',
+  './icon-512.png?v=257'
 ];
 
 self.addEventListener('install', event => {

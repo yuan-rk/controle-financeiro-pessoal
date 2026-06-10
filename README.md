@@ -86,3 +86,9 @@ Esta versão inclui manifest.json, sw.js e ícones para instalação na tela ini
 - Barra inferior tem rolagem lateral.
 - Remove o botão "Mais".
 - Corrige filtros no telefone para não cortar ano e forma de pagamento.
+
+
+## v25.7 cache fix
+- Mantém as mudanças da v25.6.
+- Força o navegador a baixar `styles.css?v=257` e `app.js?v=257`.
+- Corrige o caso em que o telefone carregava CSS novo, mas mantinha app.js antigo com o botão "Mais".
