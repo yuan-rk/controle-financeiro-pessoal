@@ -2230,7 +2230,7 @@ button[aria-label="Abrir navegação"],
 
 
 
-/* v255: relatório mensal */
+/* v256: relatório mensal */
 .settings-card .settings-actions{
   display:flex;
   flex-wrap:wrap;
@@ -2534,5 +2534,202 @@ button[aria-label="Abrir navegação"],
     height:30px!important;
     background:rgba(148,163,184,.08)!important;
     border:1px solid rgba(148,163,184,.10)!important;
+  }
+}
+
+
+/* v25.6 — mobile com barra rolável e filtros sem cortar texto */
+
+/* A partir desta versão, o telefone volta a ter todos os botões na barra inferior,
+   com rolagem lateral. O botão "Mais" não é usado. */
+@media (max-width: 700px){
+  /* Espaço geral do conteúdo */
+  .main-content,
+  html.touch-layout .main-content,
+  body.touch-layout .main-content{
+    padding:18px 12px 116px!important;
+    max-width:100vw!important;
+    overflow-x:hidden!important;
+  }
+
+  /* Filtros: deixam de ficar todos espremidos na mesma linha */
+  .filters-bar,
+  html.touch-layout .filters-bar,
+  body.touch-layout .filters-bar{
+    display:grid!important;
+    grid-template-columns:minmax(120px, 1fr) minmax(120px, 1fr)!important;
+    gap:10px!important;
+    align-items:end!important;
+    overflow:visible!important;
+    padding:12px!important;
+    border-radius:18px!important;
+  }
+
+  .filters-bar label,
+  html.touch-layout .filters-bar label,
+  body.touch-layout .filters-bar label{
+    min-width:0!important;
+    width:100%!important;
+  }
+
+  .filters-bar label:nth-child(3),
+  html.touch-layout .filters-bar label:nth-child(3),
+  body.touch-layout .filters-bar label:nth-child(3){
+    grid-column:1 / -1!important;
+  }
+
+  .filters-bar button,
+  html.touch-layout .filters-bar button,
+  body.touch-layout .filters-bar button{
+    grid-column:1 / -1!important;
+    width:100%!important;
+    min-height:50px!important;
+    border-radius:16px!important;
+  }
+
+  .filters-bar select,
+  .filters-bar input,
+  html.touch-layout .filters-bar select,
+  html.touch-layout .filters-bar input,
+  body.touch-layout .filters-bar select,
+  body.touch-layout .filters-bar input{
+    width:100%!important;
+    min-width:0!important;
+    min-height:50px!important;
+    padding:0 14px!important;
+    font-size:1rem!important;
+    text-overflow:ellipsis!important;
+  }
+
+  /* Evita o ano aparecer cortado */
+  #dashboardYear{
+    min-width:120px!important;
+    max-width:none!important;
+  }
+
+  /* Barra inferior rolável com todos os itens */
+  .bottom-nav,
+  #mobileNav,
+  html.touch-layout #mobileNav,
+  body.touch-layout #mobileNav{
+    position:fixed!important;
+    left:0!important;
+    right:0!important;
+    bottom:0!important;
+    z-index:9000!important;
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    gap:8px!important;
+    width:100%!important;
+    max-width:100vw!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    -webkit-overflow-scrolling:touch!important;
+    scrollbar-width:none!important;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom))!important;
+    background:rgba(15,23,42,.98)!important;
+    border-top:1px solid var(--border)!important;
+    box-shadow:0 -18px 50px rgba(0,0,0,.32)!important;
+    backdrop-filter:blur(16px)!important;
+    visibility:visible!important;
+    opacity:1!important;
+    pointer-events:auto!important;
+  }
+
+  #mobileNav::-webkit-scrollbar,
+  .bottom-nav::-webkit-scrollbar{
+    display:none!important;
+  }
+
+  #mobileNav .nav-btn,
+  .bottom-nav .nav-btn,
+  html.touch-layout #mobileNav .nav-btn,
+  body.touch-layout #mobileNav .nav-btn{
+    flex:0 0 96px!important;
+    width:96px!important;
+    min-width:96px!important;
+    max-width:96px!important;
+    height:64px!important;
+    padding:8px 6px!important;
+    border-radius:16px!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:5px!important;
+    background:transparent!important;
+    color:var(--muted)!important;
+    border:1px solid transparent!important;
+    font-size:1rem!important;
+  }
+
+  #mobileNav .nav-btn.active,
+  .bottom-nav .nav-btn.active,
+  html.touch-layout #mobileNav .nav-btn.active,
+  body.touch-layout #mobileNav .nav-btn.active{
+    background:rgba(79,70,229,.22)!important;
+    border-color:rgba(79,70,229,.28)!important;
+    color:var(--text)!important;
+  }
+
+  #mobileNav .nav-icon,
+  .bottom-nav .nav-icon,
+  html.touch-layout #mobileNav .nav-icon,
+  body.touch-layout #mobileNav .nav-icon{
+    width:auto!important;
+    min-width:0!important;
+    height:auto!important;
+    background:transparent!important;
+    border:0!important;
+    font-size:1.24rem!important;
+    line-height:1!important;
+  }
+
+  #mobileNav .nav-btn span:not(.nav-icon),
+  .bottom-nav .nav-btn span:not(.nav-icon),
+  html.touch-layout #mobileNav .nav-btn span:not(.nav-icon),
+  body.touch-layout #mobileNav .nav-btn span:not(.nav-icon){
+    display:block!important;
+    font-size:.70rem!important;
+    line-height:1.05!important;
+    font-weight:700!important;
+    text-align:center!important;
+    white-space:normal!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    max-width:86px!important;
+  }
+
+  #mobileNav .nav-btn[data-page="newPurchase"]{
+    background:rgba(79,70,229,.12)!important;
+    border-color:rgba(79,70,229,.18)!important;
+  }
+
+  /* Como não há mais botão Mais, o drawer fica escondido no telefone */
+  .mobile-drawer,
+  .mobile-drawer.show,
+  body.mobile-more-open .mobile-drawer{
+    display:none!important;
+    visibility:hidden!important;
+    opacity:0!important;
+    pointer-events:none!important;
+  }
+}
+
+/* Em telas muito estreitas, deixa cada botão levemente menor para caber melhor */
+@media (max-width: 380px){
+  #mobileNav .nav-btn,
+  .bottom-nav .nav-btn{
+    flex-basis:88px!important;
+    width:88px!important;
+    min-width:88px!important;
+    max-width:88px!important;
+  }
+
+  #mobileNav .nav-btn span:not(.nav-icon),
+  .bottom-nav .nav-btn span:not(.nav-icon){
+    max-width:78px!important;
+    font-size:.68rem!important;
   }
 }

@@ -440,36 +440,19 @@
   }
 
   function renderNav() {
-    const isPhone = window.matchMedia('(max-width: 700px)').matches;
-    const mobileMenu = isPhone ? [
-      ['dashboard', '⌂', 'Início'],
-      ['newPurchase', '＋', 'Nova compra'],
-      ['purchases', '▣', 'Compras'],
-      ['installments', '▤', 'Parcelas'],
-      ['more', '⋯', 'Mais']
-    ] : menu;
-
     const make = (items) => items.map(([id, icon, label]) => {
-      const isMore = id === 'more';
-      const moreActive = isMore && !['dashboard','newPurchase','purchases','installments'].includes(state.currentPage);
-      const active = moreActive || state.currentPage === id;
-      return `<button class="nav-btn ${active ? 'active' : ''} ${isMore ? 'more-btn' : ''}" data-page="${id}"><span class="nav-icon">${icon}</span><span>${label}</span></button>`;
+      const active = state.currentPage === id;
+      return `<button class="nav-btn ${active ? 'active' : ''}" data-page="${id}"><span class="nav-icon">${icon}</span><span>${label}</span></button>`;
     }).join('');
 
     $('#desktopNav').innerHTML = make(menu);
     $('#drawerNav').innerHTML = make(menu);
-    $('#mobileNav').innerHTML = make(mobileMenu);
+    $('#mobileNav').innerHTML = make(menu);
 
     $$('.nav-btn').forEach(btn => btn.onclick = () => showPage(btn.dataset.page));
   }
 
   function showPage(page) {
-    if (page === 'more') {
-      const drawer = $('#mobileDrawer');
-      if (drawer) drawer.classList.add('show');
-      document.body.classList.add('mobile-more-open');
-      return;
-    }
     state.currentPage = page;
     $$('.page').forEach(p => p.classList.remove('active'));
     $(`#${page}Page`).classList.add('active');
@@ -1025,7 +1008,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=255" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=256" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -1260,7 +1243,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=255').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=256').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
@@ -1276,16 +1259,16 @@ if ('serviceWorker' in navigator) {
     const closeBtn = document.getElementById('closeMobileMenu');
     if(!drawer) return;
 
-    if(closeBtn && !closeBtn.dataset.v255Bound){
-      closeBtn.dataset.v255Bound = '1';
+    if(closeBtn && !closeBtn.dataset.v256Bound){
+      closeBtn.dataset.v256Bound = '1';
       closeBtn.addEventListener('click', function(){
         drawer.classList.remove('show');
         document.body.classList.remove('mobile-more-open');
       });
     }
 
-    if(!drawer.dataset.v255Bound){
-      drawer.dataset.v255Bound = '1';
+    if(!drawer.dataset.v256Bound){
+      drawer.dataset.v256Bound = '1';
       drawer.addEventListener('click', function(event){
         if(event.target === drawer){
           drawer.classList.remove('show');

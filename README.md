@@ -79,3 +79,10 @@ Esta versão inclui manifest.json, sw.js e ícones para instalação na tela ini
 - Troca os emojis antigos por símbolos mais limpos.
 - Preserva a barra inferior completa no PC/tablet.
 - Preserva a barra compacta com "Mais" no telefone.
+
+
+## v25.6 mobile scroll
+- Telefone volta a mostrar todos os itens na barra inferior.
+- Barra inferior tem rolagem lateral.
+- Remove o botão "Mais".
+- Corrige filtros no telefone para não cortar ano e forma de pagamento.
