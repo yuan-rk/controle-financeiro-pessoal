@@ -10,9 +10,9 @@
   const currentYear = today.getFullYear();
 
   const menu = [
-    ['dashboard', '📊', 'Dashboard'], ['newPurchase', '➕', 'Nova compra'], ['purchases', '🧾', 'Compras'],
-    ['installments', '📆', 'Parcelas'], ['cards', '💳', 'Formas de pagamento'], ['people', '👥', 'Pessoas'],
-    ['payments', '💸', 'Recebimentos'], ['merchants', '🏪', 'Estabelecimentos'], ['categories', '🏷️', 'Categorias'], ['settings', '⚙️', 'Configurações']
+    ['dashboard', '⌂', 'Dashboard'], ['newPurchase', '＋', 'Nova compra'], ['purchases', '▣', 'Compras'],
+    ['installments', '▤', 'Parcelas'], ['cards', '▰', 'Formas de pagamento'], ['people', '♙', 'Pessoas'],
+    ['payments', '●', 'Recebimentos'], ['merchants', '◇', 'Estabelecimentos'], ['categories', '⌑', 'Categorias'], ['settings', '⚙', 'Configurações']
   ];
 
   const state = {
@@ -1025,7 +1025,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=254" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=255" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -1260,7 +1260,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=254').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=255').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
@@ -1276,16 +1276,16 @@ if ('serviceWorker' in navigator) {
     const closeBtn = document.getElementById('closeMobileMenu');
     if(!drawer) return;
 
-    if(closeBtn && !closeBtn.dataset.v254Bound){
-      closeBtn.dataset.v254Bound = '1';
+    if(closeBtn && !closeBtn.dataset.v255Bound){
+      closeBtn.dataset.v255Bound = '1';
       closeBtn.addEventListener('click', function(){
         drawer.classList.remove('show');
         document.body.classList.remove('mobile-more-open');
       });
     }
 
-    if(!drawer.dataset.v254Bound){
-      drawer.dataset.v254Bound = '1';
+    if(!drawer.dataset.v255Bound){
+      drawer.dataset.v255Bound = '1';
       drawer.addEventListener('click', function(event){
         if(event.target === drawer){
           drawer.classList.remove('show');

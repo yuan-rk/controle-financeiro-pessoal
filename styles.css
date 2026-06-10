@@ -2230,7 +2230,7 @@ button[aria-label="Abrir navegação"],
 
 
 
-/* v254: relatório mensal */
+/* v255: relatório mensal */
 .settings-card .settings-actions{
   display:flex;
   flex-wrap:wrap;
@@ -2480,4 +2480,59 @@ button[aria-label="Abrir navegação"],
   .panel,.table-card,.metric-card{padding:14px!important;border-radius:16px!important}
   button,.primary-button,.secondary-button,.ghost-button,.danger-button,.icon-button{min-height:46px!important}
   input,select,textarea{min-height:46px!important;font-size:16px!important}
+}
+
+
+/* v25.5 — ícones mais limpos mantendo a navegação funcionando */
+.nav-icon{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:26px!important;
+  min-width:26px!important;
+  height:26px!important;
+  border-radius:9px!important;
+  font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+  font-size:1.05rem!important;
+  line-height:1!important;
+  font-weight:800!important;
+  color:#dbeafe!important;
+  background:rgba(148,163,184,.08)!important;
+  border:1px solid rgba(148,163,184,.10)!important;
+}
+
+.nav-btn.active .nav-icon{
+  color:#c7d2fe!important;
+  background:rgba(99,102,241,.20)!important;
+  border-color:rgba(99,102,241,.28)!important;
+}
+
+.nav-btn:hover .nav-icon{
+  background:rgba(99,102,241,.14)!important;
+}
+
+/* Barra inferior: ícones mais consistentes */
+.bottom-nav .nav-icon,
+#mobileNav .nav-icon{
+  font-size:1.08rem!important;
+}
+
+@media (max-width:700px){
+  #mobileNav .nav-icon,
+  .bottom-nav .nav-icon{
+    width:auto!important;
+    min-width:0!important;
+    height:auto!important;
+    background:transparent!important;
+    border:0!important;
+    font-size:1.25rem!important;
+  }
+
+  #drawerNav .nav-icon{
+    width:30px!important;
+    min-width:30px!important;
+    height:30px!important;
+    background:rgba(148,163,184,.08)!important;
+    border:1px solid rgba(148,163,184,.10)!important;
+  }
 }

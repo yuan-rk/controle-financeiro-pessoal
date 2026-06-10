@@ -72,3 +72,10 @@ Esta versão inclui manifest.json, sw.js e ícones para instalação na tela ini
 - Telefone usa barra compacta com 5 botões e "Mais".
 - Botão "Mais" abre o menu no telefone.
 - Sem mudanças em Supabase, banco, compras ou parcelamento.
+
+
+## v25.5 ícones
+- Mantém a navegação da v25.4 funcionando.
+- Troca os emojis antigos por símbolos mais limpos.
+- Preserva a barra inferior completa no PC/tablet.
+- Preserva a barra compacta com "Mais" no telefone.
