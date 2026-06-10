@@ -705,3 +705,30 @@ input:focus,select:focus,textarea:focus{
   .stack-item{align-items:flex-start;flex-direction:column}
 }
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+
+/* v28: correção de modal fantasma.
+   O modal só aparece quando recebe a classe .active ou quando NÃO está hidden. */
+.modal,
+.modal-overlay,
+.modal-backdrop:not(.active)[hidden],
+.modal-backdrop[hidden] {
+  display: none !important;
+}
+
+.modal.active,
+.modal-overlay.active,
+.modal-backdrop.active {
+  display: grid !important;
+}
+
+.modal-backdrop:not(.active) {
+  display: none;
+}
+
+/* Compatibilidade com estrutura antiga de modal */
+#modal:not(.active),
+#appModal:not(.active),
+.generic-modal:not(.active) {
+  display: none !important;
+}

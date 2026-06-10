@@ -1454,3 +1454,30 @@ if ('serviceWorker' in navigator) {
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", enhance);
   else enhance();
 })();
+
+
+/* YR v28: garante que nenhum modal fantasma fique aberto ao carregar */
+(function(){
+  function closeGhostModals(){
+    const candidates = document.querySelectorAll('.modal, .modal-overlay, .modal-backdrop, #modal, #appModal, .generic-modal');
+    candidates.forEach(el => {
+      const hasDialogContent = el.querySelector('form, input, select, textarea, button[data-confirm], .modal-body');
+      const isIntentionallyActive = el.classList.contains('active') || el.getAttribute('aria-modal') === 'true';
+      const text = (el.textContent || '').trim().toLowerCase();
+
+      if (!isIntentionallyActive || text === 'modal' || !hasDialogContent) {
+        el.classList.remove('active');
+        el.setAttribute('hidden', '');
+        el.style.display = 'none';
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', closeGhostModals);
+  } else {
+    closeGhostModals();
+  }
+
+  window.addEventListener('pageshow', closeGhostModals);
+})();
