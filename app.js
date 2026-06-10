@@ -440,43 +440,43 @@
   }
 
   function renderNav() {
-    const make = (items, opts = {}) => items.map(([id, icon, label]) => {
-      const isMore = id === 'more';
-      const active = isMore
-        ? !['dashboard','newPurchase','purchases','installments'].includes(state.currentPage)
-        : state.currentPage === id;
-      return `<button class="nav-btn ${active ? 'active' : ''} ${isMore ? 'more-btn' : ''}" data-page="${id}" ${isMore ? 'data-role="more"' : ''}><span class="nav-icon">${icon}</span><span>${label}</span></button>`;
-    }).join('');
-
-    const mobileMenu = [
+    const isPhone = window.matchMedia('(max-width: 700px)').matches;
+    const mobileMenu = isPhone ? [
       ['dashboard', '⌂', 'Início'],
       ['newPurchase', '＋', 'Nova compra'],
       ['purchases', '▣', 'Compras'],
       ['installments', '▤', 'Parcelas'],
       ['more', '⋯', 'Mais']
-    ];
+    ] : menu;
+
+    const make = (items) => items.map(([id, icon, label]) => {
+      const isMore = id === 'more';
+      const moreActive = isMore && !['dashboard','newPurchase','purchases','installments'].includes(state.currentPage);
+      const active = moreActive || state.currentPage === id;
+      return `<button class="nav-btn ${active ? 'active' : ''} ${isMore ? 'more-btn' : ''}" data-page="${id}"><span class="nav-icon">${icon}</span><span>${label}</span></button>`;
+    }).join('');
 
     $('#desktopNav').innerHTML = make(menu);
     $('#drawerNav').innerHTML = make(menu);
     $('#mobileNav').innerHTML = make(mobileMenu);
 
-    $$('.nav-btn').forEach(btn => btn.onclick = () => {
-      const page = btn.dataset.page;
-      if (page === 'more') {
-        $('#mobileDrawer').classList.add('show');
-        return;
-      }
-      showPage(page);
-    });
+    $$('.nav-btn').forEach(btn => btn.onclick = () => showPage(btn.dataset.page));
   }
 
   function showPage(page) {
+    if (page === 'more') {
+      const drawer = $('#mobileDrawer');
+      if (drawer) drawer.classList.add('show');
+      document.body.classList.add('mobile-more-open');
+      return;
+    }
     state.currentPage = page;
     $$('.page').forEach(p => p.classList.remove('active'));
     $(`#${page}Page`).classList.add('active');
     $('#pageTitle').textContent = menu.find(m => m[0] === page)?.[2] || 'YR Finanças';
     $('#mobileDrawer').classList.remove('show');
     document.body.classList.remove('sidebar-open');
+    document.body.classList.remove('mobile-more-open');
     renderNav();
     renderAll(false);
   }
@@ -1025,7 +1025,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=252" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=254" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -1260,83 +1260,72 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=252').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=254').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
 }
 
 
-/* v25.1 mobile: ajustes seguros para o telefone */
+/* v25.4: navegação corrigida — PC/tablet com barra completa, telefone com Mais */
 (function(){
-  function bindMobileDrawerBackdrop(){
+  let lastPhoneState = null;
+
+  function setupMobileDrawer(){
     const drawer = document.getElementById('mobileDrawer');
     const closeBtn = document.getElementById('closeMobileMenu');
     if(!drawer) return;
-    if(closeBtn && !closeBtn.dataset.v252Bound){
-      closeBtn.dataset.v252Bound = '1';
-      closeBtn.addEventListener('click', () => drawer.classList.remove('show'));
-    }
-    if(!drawer.dataset.v252Bound){
-      drawer.dataset.v252Bound = '1';
-      drawer.addEventListener('click', (event) => {
-        if(event.target === drawer) drawer.classList.remove('show');
-      });
-    }
-  }
 
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', bindMobileDrawerBackdrop);
-  } else {
-    bindMobileDrawerBackdrop();
-  }
-})();
-
-
-/* v25.2: botão Mais robusto apenas para telefone */
-(function(){
-  function setupMoreButton(){
-    const mobileNav = document.getElementById('mobileNav');
-    const drawer = document.getElementById('mobileDrawer');
-    const closeBtn = document.getElementById('closeMobileMenu');
-    if(!mobileNav || !drawer) return;
-
-    if(!mobileNav.dataset.v252Bound){
-      mobileNav.dataset.v252Bound = '1';
-      mobileNav.addEventListener('click', function(event){
-        const btn = event.target.closest('.nav-btn[data-page="more"], .more-btn, [data-role="more"]');
-        if(!btn) return;
-        event.preventDefault();
-        event.stopPropagation();
-        drawer.classList.add('show');
-      }, true);
-    }
-
-    if(closeBtn && !closeBtn.dataset.v252Bound){
-      closeBtn.dataset.v252Bound = '1';
+    if(closeBtn && !closeBtn.dataset.v254Bound){
+      closeBtn.dataset.v254Bound = '1';
       closeBtn.addEventListener('click', function(){
         drawer.classList.remove('show');
+        document.body.classList.remove('mobile-more-open');
       });
     }
 
-    if(!drawer.dataset.v252BackdropBound){
-      drawer.dataset.v252BackdropBound = '1';
+    if(!drawer.dataset.v254Bound){
+      drawer.dataset.v254Bound = '1';
       drawer.addEventListener('click', function(event){
-        if(event.target === drawer) drawer.classList.remove('show');
+        if(event.target === drawer){
+          drawer.classList.remove('show');
+          document.body.classList.remove('mobile-more-open');
+        }
       });
     }
+  }
 
-    // Se estiver em PC/tablet grande, fecha qualquer drawer aberto e deixa a barra invisível via CSS.
-    if(window.innerWidth > 700){
-      drawer.classList.remove('show');
+  function rerenderNavOnBreakpointChange(){
+    const isPhone = window.matchMedia('(max-width: 700px)').matches;
+    if(lastPhoneState === null){
+      lastPhoneState = isPhone;
+      return;
+    }
+    if(isPhone !== lastPhoneState){
+      lastPhoneState = isPhone;
+      if(window.FinCard && typeof window.FinCard.showPage === 'function'){
+        // não disponível nesta versão como método público normalmente; usa clique visual atual
+      }
+      const active = document.querySelector('.page.active');
+      if(active){
+        const page = active.id.replace(/Page$/, '');
+        const buttons = document.querySelectorAll(`.nav-btn[data-page="${page}"]`);
+        buttons.forEach(btn => btn.classList.add('active'));
+      }
+      // renderNav está no escopo interno do app, então forçamos recarregar os botões pela troca de página atual
+      const currentButton = document.querySelector('.nav-btn.active[data-page]:not([data-page="more"])');
+      if(currentButton) currentButton.click();
     }
   }
 
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', setupMoreButton);
+    document.addEventListener('DOMContentLoaded', setupMobileDrawer);
   } else {
-    setupMoreButton();
+    setupMobileDrawer();
   }
-  window.addEventListener('load', setupMoreButton);
-  window.addEventListener('resize', setupMoreButton);
+  window.addEventListener('load', setupMobileDrawer);
+  window.addEventListener('resize', function(){
+    setupMobileDrawer();
+    rerenderNavOnBreakpointChange();
+  });
 })();

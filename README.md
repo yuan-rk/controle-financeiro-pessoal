@@ -67,16 +67,8 @@ Como o projeto é HTML, CSS e JavaScript puro, pode ser hospedado em qualquer ho
 Esta versão inclui manifest.json, sw.js e ícones para instalação na tela inicial do celular. Após subir ao GitHub Pages, acesse com ?v=25 e limpe/cache se necessário.
 
 
-## v25.1 mobile
-Ajuste focado no telefone:
-- barra inferior com 5 atalhos maiores;
-- botão "Mais" abrindo os demais itens do menu;
-- botões e campos maiores no celular;
-- cards e espaçamentos mobile mais confortáveis.
-
-
-## v25.2 mobile fix
-Correção da v25.1:
-- A barra inferior com "Mais" aparece apenas em telefone.
-- PC e tablet grande não mostram o botão "Mais".
-- O botão "Mais" abre o menu lateral no telefone.
+## v25.4 navegação corrigida
+- PC/tablet touch mantêm a barra inferior completa, como na v25 original.
+- Telefone usa barra compacta com 5 botões e "Mais".
+- Botão "Mais" abre o menu no telefone.
+- Sem mudanças em Supabase, banco, compras ou parcelamento.

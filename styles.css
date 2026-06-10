@@ -2230,7 +2230,7 @@ button[aria-label="Abrir navegação"],
 
 
 
-/* v252: relatório mensal */
+/* v254: relatório mensal */
 .settings-card .settings-actions{
   display:flex;
   flex-wrap:wrap;
@@ -2243,170 +2243,125 @@ button[aria-label="Abrir navegação"],
 }
 
 
-/* v25.1 mobile — melhoria visual focada no telefone, sem mexer na lógica */
+/* v25.4 — navegação corrigida */
 
-/* Em aparelhos touch, permitimos o drawer do botão "Mais" */
-html.touch-layout .mobile-drawer.show,
-body.touch-layout .mobile-drawer.show{
-  display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
-  pointer-events:auto!important;
-}
-
-html.touch-layout .drawer-panel,
-body.touch-layout .drawer-panel{
-  width:min(360px, 88vw)!important;
-  max-width:88vw!important;
-  height:100%!important;
-  background:var(--card)!important;
-  border-right:1px solid var(--border)!important;
-  padding:18px 16px 22px!important;
-  overflow:auto!important;
-  box-shadow:20px 0 48px rgba(0,0,0,.28)!important;
-}
-
-html.touch-layout .drawer-head,
-body.touch-layout .drawer-head{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:space-between!important;
-  margin-bottom:14px!important;
-}
-
-html.touch-layout .drawer-panel .nav-list,
-body.touch-layout .drawer-panel .nav-list{
-  display:flex!important;
-  flex-direction:column!important;
-  gap:8px!important;
-}
-
-html.touch-layout .drawer-panel .nav-btn,
-body.touch-layout .drawer-panel .nav-btn{
-  justify-content:flex-start!important;
-  flex-direction:row!important;
-  min-height:50px!important;
-  padding:12px 14px!important;
-  border-radius:14px!important;
-}
-
-/* Reforços gerais de usabilidade mobile */
-@media (max-width: 700px){
-  html.touch-layout .main-content,
-  body.touch-layout .main-content{
-    padding:18px 12px 108px!important;
-  }
-
-  html.touch-layout .topbar,
-  body.touch-layout .topbar{
-    gap:10px!important;
-    margin-bottom:16px!important;
-  }
-
-  html.touch-layout .topbar h1,
-  body.touch-layout .topbar h1{
-    font-size:1.8rem!important;
-    line-height:1.05!important;
-  }
-
-  html.touch-layout .eyebrow,
-  body.touch-layout .eyebrow{
-    font-size:.72rem!important;
-    letter-spacing:.08em!important;
-  }
-
-  html.touch-layout .filters-bar,
-  body.touch-layout .filters-bar{
-    grid-template-columns:1fr!important;
-    gap:10px!important;
-    padding:12px!important;
-  }
-
-  html.touch-layout .filters-bar label,
-  html.touch-layout .field,
-  body.touch-layout .filters-bar label,
-  body.touch-layout .field{
-    min-width:0!important;
-  }
-
-  html.touch-layout .metric-grid,
-  html.touch-layout .cards-grid,
-  html.touch-layout .smart-form,
-  html.touch-layout .chart-grid,
-  html.touch-layout .info-grid,
-  html.touch-layout .overview-grid,
-  body.touch-layout .metric-grid,
-  body.touch-layout .cards-grid,
-  body.touch-layout .smart-form,
-  body.touch-layout .chart-grid,
-  body.touch-layout .info-grid,
-  body.touch-layout .overview-grid{
-    grid-template-columns:1fr!important;
-    gap:12px!important;
-  }
-
-  html.touch-layout .panel,
-  html.touch-layout .table-card,
-  html.touch-layout .metric-card,
-  body.touch-layout .panel,
-  body.touch-layout .table-card,
-  body.touch-layout .metric-card{
-    padding:14px!important;
-    border-radius:16px!important;
-  }
-
-  html.touch-layout .metric-card strong,
-  body.touch-layout .metric-card strong{
-    font-size:1.35rem!important;
-  }
-
-  html.touch-layout button,
-  html.touch-layout .primary-button,
-  html.touch-layout .secondary-button,
-  html.touch-layout .ghost-button,
-  html.touch-layout .danger-button,
-  html.touch-layout .icon-button,
-  body.touch-layout button,
-  body.touch-layout .primary-button,
-  body.touch-layout .secondary-button,
-  body.touch-layout .ghost-button,
-  body.touch-layout .danger-button,
-  body.touch-layout .icon-button{
-    min-height:46px!important;
-  }
-
-  html.touch-layout input,
-  html.touch-layout select,
-  html.touch-layout textarea,
-  body.touch-layout input,
-  body.touch-layout select,
-  body.touch-layout textarea{
-    min-height:46px!important;
-    font-size:16px!important;
-  }
-
-  /* Barra inferior nova e maior */
+/* PC/tablet touch: mantém a barra inferior completa, como na v25 original */
+@media (min-width: 701px){
   html.touch-layout .mobile-nav,
   body.touch-layout .mobile-nav,
   html.touch-layout #mobileNav,
   body.touch-layout #mobileNav{
+    position:fixed!important;
+    left:0!important;
+    right:0!important;
+    bottom:0!important;
+    z-index:9999!important;
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    gap:8px!important;
+    width:100%!important;
+    max-width:100vw!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom))!important;
+    background:rgba(15,23,42,.98)!important;
+    border-top:1px solid var(--border)!important;
+    backdrop-filter:blur(16px)!important;
+    box-shadow:0 -18px 50px rgba(0,0,0,.32)!important;
+    -webkit-overflow-scrolling:touch!important;
+    scrollbar-width:none!important;
+    visibility:visible!important;
+    opacity:1!important;
+    pointer-events:auto!important;
+  }
+
+  html.touch-layout #mobileNav::-webkit-scrollbar,
+  body.touch-layout #mobileNav::-webkit-scrollbar{
+    display:none!important;
+  }
+
+  html.touch-layout #mobileNav .nav-btn,
+  body.touch-layout #mobileNav .nav-btn{
+    flex:0 0 auto!important;
+    min-width:104px!important;
+    max-width:150px!important;
+    height:58px!important;
+    border-radius:16px!important;
+    padding:8px 12px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:7px!important;
+    background:transparent!important;
+    color:var(--muted)!important;
+  }
+
+  html.touch-layout #mobileNav .nav-btn.active,
+  body.touch-layout #mobileNav .nav-btn.active{
+    background:rgba(99,102,241,.28)!important;
+    color:var(--text)!important;
+  }
+
+  html.touch-layout #mobileNav .nav-icon,
+  body.touch-layout #mobileNav .nav-icon{
+    font-size:1.1rem!important;
+  }
+
+  html.touch-layout #mobileNav .nav-btn span:not(.nav-icon),
+  body.touch-layout #mobileNav .nav-btn span:not(.nav-icon){
+    display:block!important;
+    font-size:.8rem!important;
+    line-height:1.05!important;
+    white-space:normal!important;
+    text-align:left!important;
+  }
+}
+
+/* Telefone: barra inferior compacta com botão Mais */
+@media (max-width: 700px){
+  .main-content,
+  html.touch-layout .main-content,
+  body.touch-layout .main-content{
+    padding:18px 12px 112px!important;
+    max-width:100vw!important;
+    overflow-x:hidden!important;
+  }
+
+  .bottom-nav,
+  #mobileNav,
+  html.touch-layout #mobileNav,
+  body.touch-layout #mobileNav{
+    position:fixed!important;
+    left:0!important;
+    right:0!important;
+    bottom:0!important;
+    z-index:9000!important;
     display:grid!important;
     grid-template-columns:repeat(5, minmax(0,1fr))!important;
     gap:8px!important;
+    width:100%!important;
+    max-width:100vw!important;
     overflow:visible!important;
     padding:10px 10px calc(10px + env(safe-area-inset-bottom))!important;
     background:rgba(15,23,42,.98)!important;
+    border-top:1px solid var(--border)!important;
+    box-shadow:0 -18px 50px rgba(0,0,0,.32)!important;
+    backdrop-filter:blur(16px)!important;
+    visibility:visible!important;
+    opacity:1!important;
+    pointer-events:auto!important;
   }
 
-  html.touch-layout .mobile-nav .nav-btn,
-  body.touch-layout .mobile-nav .nav-btn,
+  #mobileNav .nav-btn,
+  .bottom-nav .nav-btn,
   html.touch-layout #mobileNav .nav-btn,
   body.touch-layout #mobileNav .nav-btn{
+    width:100%!important;
     min-width:0!important;
     max-width:none!important;
-    width:100%!important;
-    height:62px!important;
-    padding:8px 6px!important;
+    height:64px!important;
+    padding:8px 4px!important;
     border-radius:16px!important;
     display:flex!important;
     flex-direction:column!important;
@@ -2416,119 +2371,60 @@ body.touch-layout .drawer-panel .nav-btn{
     background:transparent!important;
     color:var(--muted)!important;
     border:1px solid transparent!important;
+    font-size:1rem!important;
   }
 
-  html.touch-layout .mobile-nav .nav-btn.active,
-  body.touch-layout .mobile-nav .nav-btn.active,
+  #mobileNav .nav-btn.active,
+  .bottom-nav .nav-btn.active,
   html.touch-layout #mobileNav .nav-btn.active,
   body.touch-layout #mobileNav .nav-btn.active{
-    background:rgba(79,70,229,.20)!important;
+    background:rgba(79,70,229,.22)!important;
+    border-color:rgba(79,70,229,.28)!important;
     color:var(--text)!important;
-    border-color:rgba(79,70,229,.26)!important;
   }
 
-  html.touch-layout .mobile-nav .nav-icon,
-  body.touch-layout .mobile-nav .nav-icon,
+  #mobileNav .nav-icon,
+  .bottom-nav .nav-icon,
   html.touch-layout #mobileNav .nav-icon,
   body.touch-layout #mobileNav .nav-icon{
     width:auto!important;
     min-width:0!important;
     height:auto!important;
-    font-size:1.16rem!important;
+    font-size:1.2rem!important;
     line-height:1!important;
   }
 
-  html.touch-layout .mobile-nav .nav-btn span:not(.nav-icon),
-  body.touch-layout .mobile-nav .nav-btn span:not(.nav-icon),
+  #mobileNav .nav-btn span:not(.nav-icon),
+  .bottom-nav .nav-btn span:not(.nav-icon),
   html.touch-layout #mobileNav .nav-btn span:not(.nav-icon),
   body.touch-layout #mobileNav .nav-btn span:not(.nav-icon){
     display:block!important;
     font-size:.72rem!important;
-    font-weight:600!important;
     line-height:1.05!important;
-    white-space:normal!important;
+    font-weight:700!important;
     text-align:center!important;
+    white-space:normal!important;
   }
 
-  /* Dá destaque leve para "Nova compra" */
-  html.touch-layout .mobile-nav .nav-btn[data-page="newPurchase"],
-  body.touch-layout .mobile-nav .nav-btn[data-page="newPurchase"],
-  html.touch-layout #mobileNav .nav-btn[data-page="newPurchase"],
-  body.touch-layout #mobileNav .nav-btn[data-page="newPurchase"]{
+  #mobileNav .nav-btn[data-page="newPurchase"]{
     background:rgba(79,70,229,.12)!important;
     border-color:rgba(79,70,229,.18)!important;
-  }
-
-  /* Tabelas e conteúdo horizontal mais amigáveis */
-  html.touch-layout .table-wrap,
-  html.touch-layout .responsive-table,
-  body.touch-layout .table-wrap,
-  body.touch-layout .responsive-table{
-    overflow:auto!important;
-    -webkit-overflow-scrolling:touch!important;
-  }
-
-  html.touch-layout table,
-  body.touch-layout table{
-    min-width:720px!important;
-  }
-}
-
-
-/* v25.2 — correção: barra inferior apenas no telefone */
-
-/* PC/tablet grande: nunca mostra a barra inferior, mesmo se o aparelho tiver touch */
-@media (min-width: 701px){
-  html.touch-layout .mobile-nav,
-  body.touch-layout .mobile-nav,
-  html.touch-layout #mobileNav,
-  body.touch-layout #mobileNav,
-  .mobile-nav,
-  #mobileNav{
-    display:none!important;
-    visibility:hidden!important;
-    opacity:0!important;
-    pointer-events:none!important;
-  }
-
-  html.touch-layout .mobile-drawer,
-  body.touch-layout .mobile-drawer,
-  .mobile-drawer{
-    display:none!important;
-  }
-}
-
-/* Telefone: barra inferior aparece e o drawer do botão Mais funciona */
-@media (max-width: 700px){
-  html.touch-layout .mobile-nav,
-  body.touch-layout .mobile-nav,
-  html.touch-layout #mobileNav,
-  body.touch-layout #mobileNav,
-  .mobile-nav,
-  #mobileNav{
-    display:grid!important;
-    visibility:visible!important;
-    opacity:1!important;
-    pointer-events:auto!important;
   }
 
   .mobile-drawer{
     display:none!important;
     position:fixed!important;
     inset:0!important;
-    background:rgba(2,6,23,.72)!important;
     z-index:10000!important;
+    background:rgba(2,6,23,.72)!important;
     backdrop-filter:blur(8px)!important;
+    visibility:hidden!important;
+    opacity:0!important;
+    pointer-events:none!important;
   }
 
-  .mobile-drawer.show{
-    display:block!important;
-    visibility:visible!important;
-    opacity:1!important;
-    pointer-events:auto!important;
-  }
-
-  .mobile-drawer.show .drawer-panel{
+  .mobile-drawer.show,
+  body.mobile-more-open .mobile-drawer{
     display:block!important;
     visibility:visible!important;
     opacity:1!important;
@@ -2536,6 +2432,7 @@ body.touch-layout .drawer-panel .nav-btn{
   }
 
   .drawer-panel{
+    display:block!important;
     width:min(360px,88vw)!important;
     height:100%!important;
     background:var(--card)!important;
@@ -2545,7 +2442,20 @@ body.touch-layout .drawer-panel .nav-btn{
     box-shadow:24px 0 60px rgba(0,0,0,.34)!important;
   }
 
-  .drawer-panel .nav-btn{
+  .drawer-head{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    margin-bottom:14px!important;
+  }
+
+  #drawerNav{
+    display:flex!important;
+    flex-direction:column!important;
+    gap:8px!important;
+  }
+
+  #drawerNav .nav-btn{
     width:100%!important;
     min-height:52px!important;
     display:flex!important;
@@ -2558,10 +2468,16 @@ body.touch-layout .drawer-panel .nav-btn{
     font-size:.95rem!important;
   }
 
-  .drawer-panel .nav-btn span:not(.nav-icon){
+  #drawerNav .nav-btn span:not(.nav-icon){
     display:block!important;
     font-size:.95rem!important;
     text-align:left!important;
     white-space:normal!important;
   }
+
+  .topbar h1{font-size:1.8rem!important;line-height:1.05!important}
+  .filters-bar{gap:10px!important;padding:12px!important}
+  .panel,.table-card,.metric-card{padding:14px!important;border-radius:16px!important}
+  button,.primary-button,.secondary-button,.ghost-button,.danger-button,.icon-button{min-height:46px!important}
+  input,select,textarea{min-height:46px!important;font-size:16px!important}
 }
