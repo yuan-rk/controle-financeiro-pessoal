@@ -2230,7 +2230,7 @@ button[aria-label="Abrir navegação"],
 
 
 
-/* v259: relatório mensal */
+/* v2510: relatório mensal */
 .settings-card .settings-actions{
   display:flex;
   flex-wrap:wrap;
@@ -2732,4 +2732,127 @@ button[aria-label="Abrir navegação"],
     max-width:78px!important;
     font-size:.68rem!important;
   }
+}
+
+
+/* v25.10 — correção do tema claro */
+
+/* O bug era uma camada escura/cinza ficando por cima da área de visão geral no tema claro. */
+:root.light body{
+  background:#eef2ff!important;
+  color:#0f172a!important;
+}
+
+:root.light .finance-overview-section,
+:root.light .overview-grid,
+:root.light .overview-side,
+:root.light .overview-main-card,
+:root.light .active-accounts-card,
+:root.light .panel,
+:root.light .table-card,
+:root.light .metric-card,
+:root.light .filters-bar{
+  background:#ffffff!important;
+  color:#0f172a!important;
+  border-color:#dbe3ef!important;
+  box-shadow:0 12px 28px rgba(15,23,42,.08)!important;
+}
+
+:root.light .finance-overview-section{
+  background:rgba(255,255,255,.82)!important;
+}
+
+:root.light .overview-quick-card,
+:root.light .overview-card-item,
+:root.light .overview-row,
+:root.light .account-chip,
+:root.light .stack-item{
+  background:#f8fafc!important;
+  color:#0f172a!important;
+  border-color:#dbe3ef!important;
+}
+
+:root.light .overview-quick-card strong,
+:root.light .overview-card-item strong,
+:root.light .overview-row strong,
+:root.light .account-chip strong,
+:root.light .panel h2,
+:root.light .panel h3,
+:root.light .metric-card strong,
+:root.light .metric-card span,
+:root.light .filters-bar label{
+  color:#0f172a!important;
+}
+
+:root.light .muted,
+:root.light .overview-quick-card small,
+:root.light .overview-card-item small,
+:root.light .overview-row small,
+:root.light .account-chip span,
+:root.light .metric-card small,
+:root.light .eyebrow{
+  color:#475569!important;
+}
+
+:root.light input,
+:root.light select,
+:root.light textarea{
+  background:#ffffff!important;
+  color:#0f172a!important;
+  border-color:#cbd5e1!important;
+}
+
+:root.light input::placeholder,
+:root.light textarea::placeholder{
+  color:#64748b!important;
+}
+
+/* Barra inferior no tema claro */
+:root.light .bottom-nav,
+:root.light #mobileNav{
+  background:rgba(255,255,255,.96)!important;
+  border-top-color:#dbe3ef!important;
+  box-shadow:0 -14px 34px rgba(15,23,42,.12)!important;
+}
+
+:root.light .bottom-nav .nav-btn,
+:root.light #mobileNav .nav-btn{
+  color:#64748b!important;
+}
+
+:root.light .bottom-nav .nav-btn.active,
+:root.light #mobileNav .nav-btn.active{
+  background:rgba(79,70,229,.14)!important;
+  color:#1e1b4b!important;
+  border-color:rgba(79,70,229,.22)!important;
+}
+
+:root.light .nav-icon{
+  color:#334155!important;
+  background:rgba(15,23,42,.04)!important;
+  border-color:rgba(15,23,42,.08)!important;
+}
+
+:root.light .nav-btn.active .nav-icon{
+  color:#3730a3!important;
+  background:rgba(79,70,229,.14)!important;
+  border-color:rgba(79,70,229,.22)!important;
+}
+
+/* Mantém botões de ação com contraste bom */
+:root.light .primary-button{
+  color:#ffffff!important;
+}
+
+:root.light .secondary-button{
+  color:#0f172a!important;
+  background:rgba(8,145,178,.12)!important;
+  border-color:rgba(8,145,178,.24)!important;
+}
+
+:root.light .ghost-button,
+:root.light .icon-button{
+  color:#0f172a!important;
+  background:rgba(15,23,42,.05)!important;
+  border-color:#dbe3ef!important;
 }

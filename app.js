@@ -1,4 +1,4 @@
-const YR_FINANCAS_VERSION = 'v25.9-dashboard-filter-fix';
+const YR_FINANCAS_VERSION = 'v25.10-light-theme-fix';
 /* YR Finanças - controle de faturas com sincronização opcional em nuvem.
    O sistema usa Supabase para login e banco online. O LocalStorage continua
    como cache/backup local para melhorar a experiência e facilitar migração. */
@@ -1029,7 +1029,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=259" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=2510" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -1279,7 +1279,7 @@ function bindEvents() {
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=259').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=2510').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
@@ -1295,16 +1295,16 @@ if ('serviceWorker' in navigator) {
     const closeBtn = document.getElementById('closeMobileMenu');
     if(!drawer) return;
 
-    if(closeBtn && !closeBtn.dataset.v259Bound){
-      closeBtn.dataset.v259Bound = '1';
+    if(closeBtn && !closeBtn.dataset.v2510Bound){
+      closeBtn.dataset.v2510Bound = '1';
       closeBtn.addEventListener('click', function(){
         drawer.classList.remove('show');
         document.body.classList.remove('mobile-more-open');
       });
     }
 
-    if(!drawer.dataset.v259Bound){
-      drawer.dataset.v259Bound = '1';
+    if(!drawer.dataset.v2510Bound){
+      drawer.dataset.v2510Bound = '1';
       drawer.addEventListener('click', function(event){
         if(event.target === drawer){
           drawer.classList.remove('show');

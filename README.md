@@ -106,3 +106,9 @@ Esta versão inclui manifest.json, sw.js e ícones para instalação na tela ini
 - Ao mudar o mês, o dashboard recalcula imediatamente.
 - Continua lembrando apenas o mês escolhido.
 - O ano continua automático ao abrir o app.
+
+
+## v25.10 correção do tema claro
+- Corrige contraste e fundos no tema claro.
+- Remove o efeito de camada cinza/escura na visão geral financeira.
+- Mantém todas as correções da v25.9.

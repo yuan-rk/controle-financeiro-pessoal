@@ -1,16 +1,16 @@
-const CACHE_NAME = 'yr-financas-v259-dashboard-filter-fix';
+const CACHE_NAME = 'yr-financas-v2510-light-theme-fix';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
-  './styles.css?v=259',
+  './styles.css?v=2510',
   './app.js',
-  './app.js?v=259',
+  './app.js?v=2510',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './icon-192.png?v=259',
-  './icon-512.png?v=259'
+  './icon-192.png?v=2510',
+  './icon-512.png?v=2510'
 ];
 
 self.addEventListener('install', event => {
