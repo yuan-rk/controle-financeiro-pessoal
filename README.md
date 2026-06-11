@@ -125,3 +125,12 @@ Esta versão inclui manifest.json, sw.js e ícones para instalação na tela ini
 - Ao tocar na aba atual novamente, a página rola suavemente para o topo.
 - Ao trocar de página, a nova aba também abre no topo.
 - Mantém todas as melhorias da v25.11.
+
+
+## v25.13 dashboard PC redesign
+- Redesign real do Dashboard para PC/tablet largo.
+- Cards superiores com ícones em SVG inline.
+- Resumo rápido redesenhado com gráfico circular CSS e insights úteis.
+- Meus cartões redesenhado com cartões realistas em HTML/CSS.
+- Não usa placeholders de imagem.
+- Não altera banco, Supabase, compras, parcelas ou regras financeiras.

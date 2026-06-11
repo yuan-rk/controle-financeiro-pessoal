@@ -1,4 +1,4 @@
-const YR_FINANCAS_VERSION = 'v25.12-scroll-to-top';
+const YR_FINANCAS_VERSION = 'v25.13-dashboard-pc-redesign';
 /* YR Finanças - controle de faturas com sincronização opcional em nuvem.
    O sistema usa Supabase para login e banco online. O LocalStorage continua
    como cache/backup local para melhorar a experiência e facilitar migração. */
@@ -541,17 +541,105 @@ function renderNav() {
   const categoryOptions = () => state.data.categories.map(c => `<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('');
   const peopleOptions = (includeEmpty = false, includeAll = false) => `${includeAll ? '<option value="all">Todas as pessoas</option>' : ''}${includeEmpty ? '<option value="">Nenhuma</option>' : ''}${state.data.people.map(p => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join('')}`;
 
-  function renderDashboard() {
+  
+  function dashboardIcon(name) {
+    const icons = {
+      invoice: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-3-1.6-3 1.6-3-1.6-3 1.6-3-1.6V4a1 1 0 0 1 1-1Zm3 6h6M9 13h6M9 17h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      user: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+      people: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8 1a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM3.5 20a5.5 5.5 0 0 1 11 0M14.5 18.5a4.5 4.5 0 0 1 6 1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+      received: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M7 8.5A3.5 3.5 0 0 1 12 5a3.5 3.5 0 0 1 5 3.2M17 15.5A3.5 3.5 0 0 1 12 19a3.5 3.5 0 0 1-5-3.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+      pending: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v6l4 2M21 12a9 9 0 1 1-3-6.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      cart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h2l2.3 9.2a2 2 0 0 0 2 1.5h6.8a2 2 0 0 0 1.9-1.4L21 8H7M10 20h.01M18 20h.01" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      layers: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Zm-7 9 7 4 7-4M5 16l7 4 7-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      card: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7Zm0 3h16M7 15h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+      trend: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 9 12l4 4 7-8M15 8h5v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    };
+    return icons[name] || icons.trend;
+  }
+
+  function topGroup(items, labelFn, valueFn) {
+    const map = {};
+    (items || []).forEach(item => {
+      const label = labelFn(item) || 'Sem categoria';
+      map[label] = (map[label] || 0) + money(valueFn(item));
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1])[0] || ['Nenhum dado', 0];
+  }
+
+  function cardLogoText(card = {}) {
+    const preset = institutionPreset(card);
+    const name = `${card.name || ''} ${card.bank || ''} ${card.nickname || ''}`.toLowerCase();
+    if (preset.key === 'nubank') return 'Nubank';
+    if (preset.key === 'picpay') return 'PicPay';
+    if (preset.key === 'inter') return name.includes('black') ? 'Inter Black' : 'Inter';
+    if (preset.key === 'mercado') return 'Mercado Pago';
+    if (preset.key === 'itau') return 'Itaú';
+    if (preset.key === 'bb') return 'Banco do Brasil';
+    if (preset.key === 'caixa') return 'Caixa';
+    if (preset.key === 'santander') return 'Santander';
+    if (preset.key === 'bradesco') return 'Bradesco';
+    return card.nickname || card.name || card.bank || preset.label || 'Cartão';
+  }
+
+  function cardNetworkName(card = {}) {
+    const brand = String(card.brand || '').toLowerCase();
+    if (brand.includes('master')) return 'Mastercard';
+    if (brand.includes('visa')) return 'Visa';
+    if (brand.includes('elo')) return 'Elo';
+    if (brand.includes('amex') || brand.includes('american')) return 'Amex';
+    return card.brand || 'Card';
+  }
+
+  function realisticCardVisual(card = {}) {
+    const preset = institutionPreset(card);
+    const text = `${card.name || ''} ${card.bank || ''} ${card.nickname || ''}`.toLowerCase();
+    const isBlack = text.includes('black');
+    const color = isBlack ? '#111827' : (preset.color || card.color || '#6366F1');
+    const color2 = isBlack ? (preset.color || '#F97316') : (preset.color2 || '#06B6D4');
+    const network = cardNetworkName(card);
+    return `
+      <div class="v2513-real-card" style="--v-card-a:${color};--v-card-b:${color2};--v-card-text:${preset.textColor || '#fff'}">
+        <div class="v2513-real-card-glow"></div>
+        <div class="v2513-real-card-top">
+          <strong>${escapeHTML(cardLogoText(card))}</strong>
+          <span class="v2513-contactless">)))</span>
+        </div>
+        <div class="v2513-chip"></div>
+        <div class="v2513-real-card-bottom">
+          <span>•••• ${escapeHTML(card.last4 || '----')}</span>
+          <b>${escapeHTML(network)}</b>
+        </div>
+      </div>
+    `;
+  }
+
+function renderDashboard() {
     fillMonthYear($('#dashboardMonth'), $('#dashboardYear'), state.filters.dashboard.month, state.filters.dashboard.year);
     $('#dashboardCard').innerHTML = cardOptions(false, true); $('#dashboardCard').value = state.filters.dashboard.cardId;
     const t = calculateDashboardTotals();
+
     const metrics = [
-      ['Total da fatura', t.totalInvoice, 'Soma de todas as parcelas no mês', 'rgba(99,102,241,.75)'], ['Meu gasto', t.mine, 'Parte que você deve pagar', 'rgba(34,197,94,.75)'],
-      ['Terceiros devem', t.others, 'Valor que outras pessoas precisam devolver', 'rgba(245,158,11,.75)'], ['Já recebido', t.received, 'Pagamentos registrados', 'rgba(6,182,212,.75)'],
-      ['Pendente a receber', t.pending, 'Ainda em aberto', 'rgba(239,68,68,.75)'], ['Compras no mês', t.purchaseCount, 'Compras com parcela neste mês', 'rgba(99,102,241,.75)', false],
-      ['Parcelas ativas', t.activeInstallments, 'Parcelas na fatura filtrada', 'rgba(6,182,212,.75)', false], ['Formas ativas', t.activeCards, 'Formas de pagamento disponíveis', 'rgba(34,197,94,.75)', false]
+      { title: 'Total da fatura', value: t.totalInvoice, hint: 'Soma das parcelas do mês', icon: 'invoice', tone: 'primary', money: true },
+      { title: 'Meu gasto', value: t.mine, hint: 'Parte que você deve pagar', icon: 'user', tone: 'success', money: true },
+      { title: 'Terceiros devem', value: t.others, hint: 'Valor a receber de outras pessoas', icon: 'people', tone: 'warning', money: true },
+      { title: 'Já recebido', value: t.received, hint: 'Pagamentos registrados', icon: 'received', tone: 'info', money: true },
+      { title: 'Pendente a receber', value: t.pending, hint: 'Ainda em aberto', icon: 'pending', tone: 'danger', money: true },
+      { title: 'Compras no mês', value: t.purchaseCount, hint: 'Compras com parcela na fatura', icon: 'cart', tone: 'primary', money: false },
+      { title: 'Parcelas ativas', value: t.activeInstallments, hint: 'Parcelas no filtro atual', icon: 'layers', tone: 'info', money: false },
+      { title: 'Formas ativas', value: t.activeCards, hint: 'Cartões e formas disponíveis', icon: 'card', tone: 'success', money: false }
     ];
-    $('#dashboardMetrics').innerHTML = metrics.map(m => `<div class="metric-card" style="--accent:${m[3]}"><span>${m[0]}</span><strong>${m[4] === false ? m[1] : formatCurrency(m[1])}</strong><small>${m[2]}</small></div>`).join('');
+
+    $('#dashboardMetrics').innerHTML = metrics.map(m => `
+      <div class="metric-card v2513-metric-card" data-tone="${m.tone}">
+        <div class="v2513-metric-top">
+          <span class="v2513-metric-icon">${dashboardIcon(m.icon)}</span>
+          <span class="v2513-metric-pill">${escapeHTML(m.title)}</span>
+        </div>
+        <strong>${m.money ? formatCurrency(m.value) : m.value}</strong>
+        <small>${escapeHTML(m.hint)}</small>
+      </div>
+    `).join('');
+
     renderFinancialOverview(t); renderRankings(t.installments); updateCharts(t);
   }
 
@@ -561,7 +649,7 @@ function renderNav() {
       const hour = new Date().getHours();
       const greet = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
       const greeting = $('#overviewGreeting');
-      if (greeting) greeting.textContent = `${greet}, Yuan! 👋`;
+      if (greeting) greeting.textContent = `${greet}, Yuan`;
 
       const selectedMonth = Number(state.filters.dashboard.month);
       const selectedYear = Number(state.filters.dashboard.year);
@@ -571,42 +659,44 @@ function renderNav() {
         .reduce((sum, p) => sum + money(p.amount), 0);
 
       const expense = money(t?.totalInvoice || 0);
-      const balance = income - expense;
+      const myExpense = money(t?.mine || 0);
+      const othersPending = money(t?.pending || 0);
+      const balance = income - myExpense;
+      const coverage = income > 0 ? Math.min(100, Math.round((myExpense / income) * 100)) : (myExpense > 0 ? 100 : 0);
 
       const totals = $('#overviewTotals');
       if (totals) {
         totals.innerHTML = `
-          <div><span>Receita mensal</span><strong class="positive">${formatCurrency(income)}</strong><small>Entradas no mês</small></div>
-          <div><span>Despesa mensal</span><strong class="danger-text">${formatCurrency(expense)}</strong><small>Saídas no mês</small></div>
-          <div><span>Saldo geral</span><strong>${formatCurrency(balance)}</strong><small>Saldo estimado</small></div>
+          <div><span>Receita mensal</span><strong class="positive">${formatCurrency(income)}</strong><small>Entradas registradas</small></div>
+          <div><span>Seu gasto previsto</span><strong class="danger-text">${formatCurrency(myExpense)}</strong><small>Sua parte nas faturas</small></div>
+          <div><span>Saldo após pagar</span><strong class="${balance < 0 ? 'danger-text' : ''}">${formatCurrency(balance)}</strong><small>Estimativa do mês</small></div>
         `;
       }
 
-      const cards = Array.isArray(state.data.cards) ? state.data.cards : [];
-      const firstCard = cards[0];
-      const secondCard = cards[1];
-      const totalInvoice = expense;
-      const myExpense = money(t?.mine || 0);
-      const othersPending = money(t?.pending || 0);
+      const topCategory = topGroup(t?.installments || [], i => categoryName(i.categoryId), i => i.amount);
+      const topCard = topGroup(t?.installments || [], i => paymentName(i), i => i.amount);
+      const nextInstallment = [...(state.data.installments || [])]
+        .filter(i => i.year > currentYear || (i.year === currentYear && i.month >= currentMonth))
+        .sort((a, b) => a.year - b.year || a.month - b.month || money(b.amount) - money(a.amount))[0];
 
       const accountData = [
-        ['Receita estimada', 'Entradas registradas no mês', income || 0, '📈', '#22C55E'],
-        ['Gastos estimados', 'Sua parte + faturas do mês', myExpense || totalInvoice, '📉', '#EF4444'],
-        ['Saldo após pagar tudo', 'Receita menos seus gastos', income - (myExpense || totalInvoice), '💰', '#06B6D4'],
-        ['Fatura do mês', 'Total em cartões e compras', -totalInvoice, '💳', '#6366F1']
+        ['Maior categoria', topCategory[0], topCategory[1], 'trend', 'category'],
+        ['Forma mais usada', topCard[0], topCard[1], 'card', 'card'],
+        ['A receber', 'Pendente de terceiros', othersPending, 'people', 'pending'],
+        ['Próxima parcela', nextInstallment ? `${nextInstallment.description} • ${monthName(nextInstallment.month)}` : 'Nada futuro encontrado', nextInstallment ? nextInstallment.amount : 0, 'layers', 'next']
       ];
 
       const accounts = $('#overviewAccounts');
       if (accounts) {
-        accounts.innerHTML = accountData.map(([name, subtitle, amount, icon, color]) => `
-          <div class="overview-row">
+        accounts.innerHTML = accountData.map(([name, subtitle, amount, icon, kind]) => `
+          <div class="overview-row v2513-insight-row" data-kind="${kind}">
             <div class="overview-row-left">
-              <span class="overview-icon" style="--icon-bg:${color}">${icon}</span>
+              <span class="overview-icon v2513-line-icon">${dashboardIcon(icon)}</span>
               <div><strong>${escapeHTML(name)}</strong><span>${escapeHTML(subtitle)}</span></div>
             </div>
             <div class="overview-row-value ${amount < 0 ? 'danger-text' : ''}">
               <strong>${formatCurrency(amount)}</strong>
-              <small>${amount < 0 ? 'em fatura' : 'em conta'}</small>
+              <small>${kind === 'pending' ? 'em aberto' : 'destaque'}</small>
             </div>
           </div>
         `).join('');
@@ -614,22 +704,38 @@ function renderNav() {
 
       const chips = $('#overviewAccountChips');
       if (chips) {
-        chips.innerHTML = accountData.slice(0, 4).map(([name, subtitle, amount, icon, color]) => `
-          <div class="account-chip">
-            <span class="overview-icon" style="--icon-bg:${color}">${icon}</span>
-            <strong>${escapeHTML(name)}</strong>
-            <small>${formatCurrency(amount)}</small>
+        const quickRows = [
+          ['Uso da receita', `${coverage}% da receita prevista`, myExpense, 'user'],
+          ['Fatura total', 'Cartões e compras do mês', expense, 'invoice'],
+          ['Compras', `${t.purchaseCount} compras / ${t.activeInstallments} parcelas`, t.purchaseCount, 'cart'],
+          ['Recebido', 'Pagamentos confirmados', t.received, 'received']
+        ];
+        chips.innerHTML = `
+          <div class="v2513-quick-shell">
+            <div class="v2513-quick-ring" style="--progress:${coverage * 3.6}deg">
+              <div><strong>${coverage}%</strong><span>uso</span></div>
+            </div>
+            <div class="v2513-quick-list">
+              ${quickRows.map(([label, desc, value, icon]) => `
+                <div class="v2513-quick-row">
+                  <span>${dashboardIcon(icon)}</span>
+                  <div><strong>${escapeHTML(label)}</strong><small>${escapeHTML(desc)}</small></div>
+                  <b>${typeof value === 'number' && label !== 'Compras' ? formatCurrency(value) : value}</b>
+                </div>
+              `).join('')}
+            </div>
           </div>
-        `).join('');
+        `;
       }
 
       const cardsBox = $('#overviewCards');
       if (cardsBox) {
+        const cards = Array.isArray(state.data.cards) ? state.data.cards : [];
         if (!cards.length) {
           cardsBox.innerHTML = `
             <div class="empty-state compact-empty">
               <strong>Nenhum cartão cadastrado</strong>
-              <span>Cadastre seus cartões, como Nubank, PicPay e Mercado Livre, para acompanhar quanto pagará em cada um.</span>
+              <span>Cadastre seus cartões para acompanhar quanto pagará em cada fatura.</span>
             </div>
           `;
         } else {
@@ -637,18 +743,18 @@ function renderNav() {
             const invoice = (t?.installments || []).filter(i => i.cardId === card.id).reduce((s, i) => s + money(i.amount), 0);
             const limit = money(card.limit);
             const available = limit ? Math.max(0, limit - invoice) : 0;
+            const usage = limit ? Math.min(100, Math.round((invoice / limit) * 100)) : 0;
             const closeText = card.closeDay ? `Fecha dia ${card.closeDay}` : 'Fatura manual';
             return `
-              <div class="overview-card-item">
-                <div class="mini-card-preview" style="--card-color:${institutionPreset(card).color};--card-color-2:${institutionPreset(card).color2}">
-                  ${institutionBadge(card, 'lg')}
-                </div>
+              <div class="overview-card-item v2513-card-item">
+                ${realisticCardVisual(card)}
                 <div class="overview-card-info">
                   <strong>${escapeHTML(card.nickname || card.name)}</strong>
-                  <span>${escapeHTML(card.type || 'Crédito')}</span>
+                  <span>${escapeHTML(card.bank || card.type || 'Cartão')}</span>
+                  <div class="v2513-limit-bar" style="--usage:${usage}%"><i></i></div>
                   <div class="overview-card-metrics">
                     <small>Valor a pagar<br><b class="${invoice > 0 ? 'danger-text' : ''}">${formatCurrency(invoice)}</b></small>
-                    <small>Limite disponível<br><b>${limit ? formatCurrency(available) : 'Sem limite'}</b></small>
+                    <small>Disponível<br><b>${limit ? formatCurrency(available) : 'Sem limite'}</b></small>
                   </div>
                 </div>
                 <div class="overview-card-actions">
@@ -665,7 +771,8 @@ function renderNav() {
     }
   }
 
-  function renderRankings(installments) {
+
+function renderRankings(installments) {
     const people = state.data.people.map(p => ({ ...p, debt: getPersonDebt(p.id, state.filters.dashboard.month, state.filters.dashboard.year).pending })).filter(p => p.debt > 0).sort((a,b)=>b.debt-a.debt);
     $('#peopleRanking').innerHTML = people.length ? people.slice(0,5).map(p => `<div class="stack-item"><div><strong>${escapeHTML(p.name)}</strong><span>Pendente no mês</span></div><b>${formatCurrency(p.debt)}</b></div>`).join('') : emptyHTML();
     const cards = state.data.cards.map(c => ({ ...c, total: installments.filter(i => i.cardId === c.id).reduce((s,i)=>s+money(i.amount),0) })).filter(c => c.total > 0).sort((a,b)=>b.total-a.total);
@@ -1103,7 +1210,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=2512" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=2513" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -1353,7 +1460,7 @@ function bindEvents() {
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=2512').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=2513').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
@@ -1369,16 +1476,16 @@ if ('serviceWorker' in navigator) {
     const closeBtn = document.getElementById('closeMobileMenu');
     if(!drawer) return;
 
-    if(closeBtn && !closeBtn.dataset.v2512Bound){
-      closeBtn.dataset.v2512Bound = '1';
+    if(closeBtn && !closeBtn.dataset.v2513Bound){
+      closeBtn.dataset.v2513Bound = '1';
       closeBtn.addEventListener('click', function(){
         drawer.classList.remove('show');
         document.body.classList.remove('mobile-more-open');
       });
     }
 
-    if(!drawer.dataset.v2512Bound){
-      drawer.dataset.v2512Bound = '1';
+    if(!drawer.dataset.v2513Bound){
+      drawer.dataset.v2513Bound = '1';
       drawer.addEventListener('click', function(event){
         if(event.target === drawer){
           drawer.classList.remove('show');
