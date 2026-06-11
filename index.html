@@ -7,12 +7,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="YR Finanças" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="manifest" href="manifest.json?v=2516" />
-  <link rel="apple-touch-icon" href="icon-192.png?v=2516" />
+  <link rel="manifest" href="manifest.json?v=2512" />
+  <link rel="apple-touch-icon" href="icon-192.png?v=2512" />
   <title>YR Finanças | Controle Financeiro Pessoal</title>
-  <link rel="icon" type="image/png" href="icon-192.png?v=2516" />
+  <link rel="icon" type="image/png" href="icon-192.png?v=2512" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-  <link rel="stylesheet" href="styles.css?v=2516" />
+  <link rel="stylesheet" href="styles.css?v=2512" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -20,7 +20,7 @@
   <div class="app-shell">
     <aside class="sidebar" aria-label="Menu principal">
       <div class="brand">
-        <div class="brand-logo"><img src="icon-192.png?v=2516" alt="Logo YR Finanças"></div>
+        <div class="brand-logo"><img src="icon-192.png?v=2512" alt="Logo YR Finanças"></div>
         <div>
           <strong>YR Finanças</strong>
           <span>controle de faturas</span>
@@ -49,7 +49,7 @@
 
       <section id="toastContainer" class="toast-container" aria-live="polite"></section>
 
-      <section class="page active dashboard-v2516" id="dashboardPage">
+      <section class="page active" id="dashboardPage">
         <div class="filters-bar">
           <label>Mês<select id="dashboardMonth"></select></label>
           <label>Ano<select id="dashboardYear"></select></label>
@@ -59,17 +59,19 @@
 
         <div class="metric-grid" id="dashboardMetrics"></div>
 
-        <section class="finance-overview-section v2516-main-dashboard" id="financeOverviewSection">
-          <div class="overview-grid v2516-overview-grid">
-            <article class="panel overview-main-card v2516-overview-card">
-              <div class="panel-header compact v2516-card-header">
-                <h3>Visão geral financeira</h3>
-                <span class="muted">estimativa</span>
-              </div>
+        <section class="finance-overview-section" id="financeOverviewSection">
+          <div class="panel-header overview-title">
+            <div>
+              <h2>Visão geral financeira</h2>
+              <span class="muted">Acompanhe sua receita estimada, seus gastos e quanto pagará em cada cartão.</span>
+            </div>
+          </div>
 
+          <div class="overview-grid">
+            <article class="panel overview-main-card">
               <div class="overview-greeting">
                 <div>
-                  <h3 id="overviewGreeting">Boa tarde, Yuan! 👋</h3>
+                  <h3 id="overviewGreeting">Boa tarde! 👋</h3>
                   <p>Aqui está um resumo da sua vida financeira.</p>
                 </div>
                 <button class="icon-button" type="button" title="Ocultar/mostrar valores">👁️</button>
@@ -84,46 +86,46 @@
               <div id="overviewAccounts" class="overview-list"></div>
             </article>
 
-            <article class="panel active-accounts-card v2516-quick-card">
-              <div class="panel-header compact v2516-card-header">
-                <h3>Resumo rápido</h3>
-                <span class="muted">insights</span>
-              </div>
-              <div id="overviewAccountChips" class="account-chip-grid"></div>
-            </article>
+            <aside class="overview-side">
+              <article class="panel active-accounts-card">
+                <div class="panel-header compact">
+                  <h3>Resumo rápido</h3>
+                  <span class="muted">estimativa</span>
+                </div>
+                <div id="overviewAccountChips" class="account-chip-grid"></div>
+              </article>
 
-            <article class="panel overview-cards-card v2516-cards-card">
-              <div class="panel-header compact v2516-card-header">
-                <h3>Meus cartões</h3>
-                <span class="muted">faturas do mês</span>
-              </div>
-              <div id="overviewCards" class="overview-card-list"></div>
-            </article>
+              <article class="panel overview-cards-card">
+                <div class="panel-header compact">
+                  <h3>Meus cartões</h3>
+                  <span class="muted">faturas do mês</span>
+                </div>
+                <div id="overviewCards" class="overview-card-list"></div>
+              </article>
+            </aside>
           </div>
         </section>
 
-        <div class="v2516-chart-row">
-          <article class="panel large-panel v2516-chart-panel">
+
+        <div class="dashboard-layout">
+          <article class="panel large-panel">
             <div class="panel-header">
               <h2>Evolução da fatura por mês</h2>
-              <span class="badge ok">Últimos 6 meses</span>
+              <span class="badge ok">dinâmico</span>
             </div>
             <canvas id="invoiceEvolutionChart"></canvas>
           </article>
-          <article class="panel v2516-chart-panel">
-            <div class="panel-header"><h2>Gastos por categoria (meu gasto)</h2></div>
-            <canvas id="categoryChart"></canvas>
-          </article>
-          <article class="panel v2516-chart-panel">
+          <article class="panel">
             <div class="panel-header"><h2>Recebido × pendente</h2></div>
             <canvas id="receivedPendingChart"></canvas>
           </article>
         </div>
 
-        <div class="v2516-hidden-charts" hidden>
-          <canvas id="cardChart"></canvas>
-          <canvas id="peopleDebtChart"></canvas>
-          <canvas id="ownerCompareChart"></canvas>
+        <div class="chart-grid">
+          <article class="panel"><div class="panel-header"><h2>Gastos por categoria</h2></div><canvas id="categoryChart"></canvas></article>
+          <article class="panel"><div class="panel-header"><h2>Gastos por cartão</h2></div><canvas id="cardChart"></canvas></article>
+          <article class="panel"><div class="panel-header"><h2>Pendências por pessoa</h2></div><canvas id="peopleDebtChart"></canvas></article>
+          <article class="panel"><div class="panel-header"><h2>Minhas compras × terceiros</h2></div><canvas id="ownerCompareChart"></canvas></article>
         </div>
 
         <div class="info-grid">
@@ -220,6 +222,6 @@
 
   <template id="emptyTemplate"><div class="empty-state"><div>🗂️</div><strong>Nada encontrado</strong><span>Cadastre dados ou ajuste os filtros para visualizar informações.</span></div></template>
 
-  <script src="app.js?v=2516"></script>
+  <script src="app.js?v=2512"></script>
 </body>
 </html>
