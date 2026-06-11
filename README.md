@@ -134,3 +134,12 @@ Esta versão inclui manifest.json, sw.js e ícones para instalação na tela ini
 - Meus cartões redesenhado com cartões realistas em HTML/CSS.
 - Não usa placeholders de imagem.
 - Não altera banco, Supabase, compras, parcelas ou regras financeiras.
+
+
+## v25.14 dashboard PC layout real
+- Reorganiza estruturalmente o Dashboard no PC para ficar mais próximo do mockup aprovado.
+- Cards superiores ficam compactos em linha.
+- Visão geral, Resumo rápido e Meus cartões ficam em três colunas no PC.
+- Corrige cartões realistas cortados.
+- Corrige ícones da estimativa do mês, maiores e centralizados.
+- Mantém mobile/tablet estreito preservados.

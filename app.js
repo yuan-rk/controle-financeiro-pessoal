@@ -1,4 +1,4 @@
-const YR_FINANCAS_VERSION = 'v25.13-dashboard-pc-redesign';
+const YR_FINANCAS_VERSION = 'v25.14-dashboard-layout-real';
 /* YR Finanças - controle de faturas com sincronização opcional em nuvem.
    O sistema usa Supabase para login e banco online. O LocalStorage continua
    como cache/backup local para melhorar a experiência e facilitar migração. */
@@ -594,19 +594,19 @@ function renderNav() {
     const preset = institutionPreset(card);
     const text = `${card.name || ''} ${card.bank || ''} ${card.nickname || ''}`.toLowerCase();
     const isBlack = text.includes('black');
-    const color = isBlack ? '#111827' : (preset.color || card.color || '#6366F1');
+    const color = isBlack ? '#101010' : (preset.color || card.color || '#6366F1');
     const color2 = isBlack ? (preset.color || '#F97316') : (preset.color2 || '#06B6D4');
     const network = cardNetworkName(card);
     return `
-      <div class="v2513-real-card" style="--v-card-a:${color};--v-card-b:${color2};--v-card-text:${preset.textColor || '#fff'}">
+      <div class="v2513-real-card v2514-real-card" style="--v-card-a:${color};--v-card-b:${color2};--v-card-text:${preset.textColor || '#fff'}">
         <div class="v2513-real-card-glow"></div>
         <div class="v2513-real-card-top">
           <strong>${escapeHTML(cardLogoText(card))}</strong>
-          <span class="v2513-contactless">)))</span>
+          <span class="v2513-contactless">⌁</span>
         </div>
         <div class="v2513-chip"></div>
         <div class="v2513-real-card-bottom">
-          <span>•••• ${escapeHTML(card.last4 || '----')}</span>
+          <span>${card.last4 ? '•••• ' + escapeHTML(card.last4) : '••••'}</span>
           <b>${escapeHTML(network)}</b>
         </div>
       </div>
@@ -619,28 +619,30 @@ function renderDashboard() {
     const t = calculateDashboardTotals();
 
     const metrics = [
-      { title: 'Total da fatura', value: t.totalInvoice, hint: 'Soma das parcelas do mês', icon: 'invoice', tone: 'primary', money: true },
+      { title: 'Total da fatura', value: t.totalInvoice, hint: 'Soma de todas as parcelas', icon: 'invoice', tone: 'primary', money: true },
       { title: 'Meu gasto', value: t.mine, hint: 'Parte que você deve pagar', icon: 'user', tone: 'success', money: true },
-      { title: 'Terceiros devem', value: t.others, hint: 'Valor a receber de outras pessoas', icon: 'people', tone: 'warning', money: true },
+      { title: 'Terceiros devem', value: t.others, hint: 'Valor que outros devolvem', icon: 'people', tone: 'warning', money: true },
       { title: 'Já recebido', value: t.received, hint: 'Pagamentos registrados', icon: 'received', tone: 'info', money: true },
-      { title: 'Pendente a receber', value: t.pending, hint: 'Ainda em aberto', icon: 'pending', tone: 'danger', money: true },
-      { title: 'Compras no mês', value: t.purchaseCount, hint: 'Compras com parcela na fatura', icon: 'cart', tone: 'primary', money: false },
-      { title: 'Parcelas ativas', value: t.activeInstallments, hint: 'Parcelas no filtro atual', icon: 'layers', tone: 'info', money: false },
-      { title: 'Formas ativas', value: t.activeCards, hint: 'Cartões e formas disponíveis', icon: 'card', tone: 'success', money: false }
+      { title: 'Pendente', value: t.pending, hint: 'Ainda em aberto', icon: 'pending', tone: 'danger', money: true },
+      { title: 'Compras', value: t.purchaseCount, hint: 'No mês filtrado', icon: 'cart', tone: 'warning', money: false },
+      { title: 'Parcelas', value: t.activeInstallments, hint: 'Na fatura filtrada', icon: 'layers', tone: 'info', money: false },
+      { title: 'Formas', value: t.activeCards, hint: 'Formas ativas', icon: 'card', tone: 'primary', money: false }
     ];
 
     $('#dashboardMetrics').innerHTML = metrics.map(m => `
-      <div class="metric-card v2513-metric-card" data-tone="${m.tone}">
-        <div class="v2513-metric-top">
-          <span class="v2513-metric-icon">${dashboardIcon(m.icon)}</span>
+      <div class="metric-card v2513-metric-card v2514-compact-metric" data-tone="${m.tone}">
+        <span class="v2513-metric-icon">${dashboardIcon(m.icon)}</span>
+        <div class="v2514-metric-copy">
           <span class="v2513-metric-pill">${escapeHTML(m.title)}</span>
+          <strong>${m.money ? formatCurrency(m.value) : m.value}</strong>
+          <small>${escapeHTML(m.hint)}</small>
         </div>
-        <strong>${m.money ? formatCurrency(m.value) : m.value}</strong>
-        <small>${escapeHTML(m.hint)}</small>
       </div>
     `).join('');
 
-    renderFinancialOverview(t); renderRankings(t.installments); updateCharts(t);
+    renderFinancialOverview(t);
+    renderRankings(t.installments);
+    updateCharts(t);
   }
 
 
@@ -662,41 +664,43 @@ function renderDashboard() {
       const myExpense = money(t?.mine || 0);
       const othersPending = money(t?.pending || 0);
       const balance = income - myExpense;
-      const coverage = income > 0 ? Math.min(100, Math.round((myExpense / income) * 100)) : (myExpense > 0 ? 100 : 0);
+      const totalLimit = (state.data.cards || []).reduce((sum, card) => sum + money(card.limit), 0);
+      const usedOnCards = expense;
+      const availableLimit = totalLimit ? Math.max(0, totalLimit - usedOnCards) : 0;
+      const usage = totalLimit ? Math.min(100, Math.round((usedOnCards / totalLimit) * 100)) : 0;
 
       const totals = $('#overviewTotals');
       if (totals) {
         totals.innerHTML = `
-          <div><span>Receita mensal</span><strong class="positive">${formatCurrency(income)}</strong><small>Entradas registradas</small></div>
-          <div><span>Seu gasto previsto</span><strong class="danger-text">${formatCurrency(myExpense)}</strong><small>Sua parte nas faturas</small></div>
-          <div><span>Saldo após pagar</span><strong class="${balance < 0 ? 'danger-text' : ''}">${formatCurrency(balance)}</strong><small>Estimativa do mês</small></div>
+          <div><span>Receita mensal</span><strong class="positive">${formatCurrency(income)}</strong><small>Entradas no mês</small></div>
+          <div><span>Despesa mensal</span><strong class="danger-text">${formatCurrency(myExpense)}</strong><small>Sua parte nas faturas</small></div>
+          <div><span>Saldo geral</span><strong class="${balance < 0 ? 'danger-text' : ''}">${formatCurrency(balance)}</strong><small>Saldo estimado</small></div>
         `;
       }
 
       const topCategory = topGroup(t?.installments || [], i => categoryName(i.categoryId), i => i.amount);
-      const topCard = topGroup(t?.installments || [], i => paymentName(i), i => i.amount);
       const nextInstallment = [...(state.data.installments || [])]
         .filter(i => i.year > currentYear || (i.year === currentYear && i.month >= currentMonth))
         .sort((a, b) => a.year - b.year || a.month - b.month || money(b.amount) - money(a.amount))[0];
 
-      const accountData = [
-        ['Maior categoria', topCategory[0], topCategory[1], 'trend', 'category'],
-        ['Forma mais usada', topCard[0], topCard[1], 'card', 'card'],
-        ['A receber', 'Pendente de terceiros', othersPending, 'people', 'pending'],
-        ['Próxima parcela', nextInstallment ? `${nextInstallment.description} • ${monthName(nextInstallment.month)}` : 'Nada futuro encontrado', nextInstallment ? nextInstallment.amount : 0, 'layers', 'next']
-      ];
-
       const accounts = $('#overviewAccounts');
       if (accounts) {
-        accounts.innerHTML = accountData.map(([name, subtitle, amount, icon, kind]) => `
-          <div class="overview-row v2513-insight-row" data-kind="${kind}">
+        const rows = [
+          ['Receita estimada', 'Entradas registradas no mês', income, 'received', income ? Math.round((income / Math.max(income, myExpense || 1)) * 100) : 0],
+          ['Gastos estimados', 'Sua parte + faturas do mês', myExpense, 'invoice', myExpense ? 100 : 0],
+          ['Saldo após pagar tudo', 'Receita menos seus gastos', balance, 'trend', income ? Math.round((balance / income) * 100) : (balance < 0 ? -100 : 0)],
+          ['Fatura do mês', 'Total em cartões e compras', expense, 'card', totalLimit ? Math.round((expense / totalLimit) * 100) : 0]
+        ];
+
+        accounts.innerHTML = rows.map(([name, subtitle, amount, icon, percent]) => `
+          <div class="overview-row v2513-insight-row v2514-estimate-row">
             <div class="overview-row-left">
               <span class="overview-icon v2513-line-icon">${dashboardIcon(icon)}</span>
               <div><strong>${escapeHTML(name)}</strong><span>${escapeHTML(subtitle)}</span></div>
             </div>
             <div class="overview-row-value ${amount < 0 ? 'danger-text' : ''}">
               <strong>${formatCurrency(amount)}</strong>
-              <small>${kind === 'pending' ? 'em aberto' : 'destaque'}</small>
+              <small>${Number.isFinite(percent) ? percent + '%' : '0%'}</small>
             </div>
           </div>
         `).join('');
@@ -704,23 +708,27 @@ function renderDashboard() {
 
       const chips = $('#overviewAccountChips');
       if (chips) {
-        const quickRows = [
-          ['Uso da receita', `${coverage}% da receita prevista`, myExpense, 'user'],
-          ['Fatura total', 'Cartões e compras do mês', expense, 'invoice'],
-          ['Compras', `${t.purchaseCount} compras / ${t.activeInstallments} parcelas`, t.purchaseCount, 'cart'],
-          ['Recebido', 'Pagamentos confirmados', t.received, 'received']
+        const quickCards = [
+          ['Próximo vencimento', nextInstallment ? `${nextInstallment.description} • ${monthName(nextInstallment.month)}` : 'Nenhum vencimento futuro', nextInstallment ? formatCurrency(nextInstallment.amount) : 'R$ 0,00', 'layers'],
+          ['Maior gasto do mês', topCategory[0], formatCurrency(topCategory[1]), 'trend'],
+          ['Recebimentos pendentes', othersPending ? 'Pendências a receber' : 'Nenhuma pendência', formatCurrency(othersPending), 'people'],
+          ['Limite livre total', 'Somando formas com limite', totalLimit ? formatCurrency(availableLimit) : 'Sem limite cadastrado', 'card']
         ];
+
         chips.innerHTML = `
-          <div class="v2513-quick-shell">
-            <div class="v2513-quick-ring" style="--progress:${coverage * 3.6}deg">
-              <div><strong>${coverage}%</strong><span>uso</span></div>
+          <div class="v2514-quick-shell">
+            <div class="v2514-quick-ring" style="--progress:${usage * 3.6}deg">
+              <div><span>Utilização</span><strong>${usage}%</strong><small>${formatCurrency(usedOnCards)} de ${formatCurrency(totalLimit || usedOnCards || 0)}</small></div>
             </div>
-            <div class="v2513-quick-list">
-              ${quickRows.map(([label, desc, value, icon]) => `
-                <div class="v2513-quick-row">
+            <div class="v2514-quick-cards">
+              ${quickCards.map(([label, desc, value, icon]) => `
+                <div class="v2514-quick-card">
                   <span>${dashboardIcon(icon)}</span>
-                  <div><strong>${escapeHTML(label)}</strong><small>${escapeHTML(desc)}</small></div>
-                  <b>${typeof value === 'number' && label !== 'Compras' ? formatCurrency(value) : value}</b>
+                  <div>
+                    <small>${escapeHTML(label)}</small>
+                    <strong>${escapeHTML(value)}</strong>
+                    <em>${escapeHTML(desc)}</em>
+                  </div>
                 </div>
               `).join('')}
             </div>
@@ -743,19 +751,20 @@ function renderDashboard() {
             const invoice = (t?.installments || []).filter(i => i.cardId === card.id).reduce((s, i) => s + money(i.amount), 0);
             const limit = money(card.limit);
             const available = limit ? Math.max(0, limit - invoice) : 0;
-            const usage = limit ? Math.min(100, Math.round((invoice / limit) * 100)) : 0;
+            const usageCard = limit ? Math.min(100, Math.round((invoice / limit) * 100)) : 0;
             const closeText = card.closeDay ? `Fecha dia ${card.closeDay}` : 'Fatura manual';
             return `
-              <div class="overview-card-item v2513-card-item">
+              <div class="overview-card-item v2513-card-item v2514-card-item">
                 ${realisticCardVisual(card)}
                 <div class="overview-card-info">
                   <strong>${escapeHTML(card.nickname || card.name)}</strong>
                   <span>${escapeHTML(card.bank || card.type || 'Cartão')}</span>
-                  <div class="v2513-limit-bar" style="--usage:${usage}%"><i></i></div>
                   <div class="overview-card-metrics">
                     <small>Valor a pagar<br><b class="${invoice > 0 ? 'danger-text' : ''}">${formatCurrency(invoice)}</b></small>
                     <small>Disponível<br><b>${limit ? formatCurrency(available) : 'Sem limite'}</b></small>
                   </div>
+                  <div class="v2513-limit-bar" style="--usage:${usageCard}%"><i></i></div>
+                  <div class="v2514-card-foot"><span>Utilizado: ${formatCurrency(invoice)}</span><span>Limite: ${limit ? formatCurrency(limit) : '—'}</span></div>
                 </div>
                 <div class="overview-card-actions">
                   <span class="mini-due-pill">${escapeHTML(closeText)}</span>
@@ -1210,7 +1219,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=2513" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=2514" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -1460,7 +1469,7 @@ function bindEvents() {
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=2513').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=2514').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
@@ -1476,16 +1485,16 @@ if ('serviceWorker' in navigator) {
     const closeBtn = document.getElementById('closeMobileMenu');
     if(!drawer) return;
 
-    if(closeBtn && !closeBtn.dataset.v2513Bound){
-      closeBtn.dataset.v2513Bound = '1';
+    if(closeBtn && !closeBtn.dataset.v2514Bound){
+      closeBtn.dataset.v2514Bound = '1';
       closeBtn.addEventListener('click', function(){
         drawer.classList.remove('show');
         document.body.classList.remove('mobile-more-open');
       });
     }
 
-    if(!drawer.dataset.v2513Bound){
-      drawer.dataset.v2513Bound = '1';
+    if(!drawer.dataset.v2514Bound){
+      drawer.dataset.v2514Bound = '1';
       drawer.addEventListener('click', function(event){
         if(event.target === drawer){
           drawer.classList.remove('show');
