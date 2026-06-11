@@ -1,4 +1,4 @@
-const YR_FINANCAS_VERSION = 'v25.12-scroll-to-top';
+const YR_FINANCAS_VERSION = 'v25.12.1-mobile-dashboard-total-fix';
 /* YR Finanças - controle de faturas com sincronização opcional em nuvem.
    O sistema usa Supabase para login e banco online. O LocalStorage continua
    como cache/backup local para melhorar a experiência e facilitar migração. */
@@ -262,6 +262,7 @@ const YR_FINANCAS_VERSION = 'v25.12-scroll-to-top';
     state.data = raw ? JSON.parse(raw) : defaultData();
     if (!state.data.settings) state.data.settings = { theme: 'dark' };
     ensureDefaultCategories();
+    prepareDataForDashboard();
     applyTheme();
     return { data: state.data, hadLocalData: Boolean(raw) };
   }
@@ -290,6 +291,7 @@ const YR_FINANCAS_VERSION = 'v25.12-scroll-to-top';
       state.data = record.data;
       if (!state.data.settings) state.data.settings = { theme: 'dark' };
       ensureDefaultCategories();
+      prepareDataForDashboard();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
       applyTheme();
       return;
@@ -377,6 +379,91 @@ const YR_FINANCAS_VERSION = 'v25.12-scroll-to-top';
       };
     });
   }
+
+  function repairInstallmentsFromPurchases() {
+    if (!state.data) return false;
+    if (!Array.isArray(state.data.purchases)) state.data.purchases = [];
+    if (!Array.isArray(state.data.installments)) state.data.installments = [];
+
+    let changed = false;
+    const repaired = [];
+
+    state.data.purchases.forEach(purchase => {
+      if (!purchase || !purchase.id) return;
+
+      const paymentMethod = purchase.paymentMethod || 'Cartão de crédito';
+      const expectedCount = paymentAllowsInstallments(paymentMethod)
+        ? Math.max(1, Number(purchase.installmentsCount || 1))
+        : 1;
+
+      const current = state.data.installments.filter(i => i.purchaseId === purchase.id);
+      const expectedTotal = money(purchase.total);
+      const currentTotal = current.reduce((sum, i) => sum + money(i.amount), 0);
+
+      const needsRepair =
+        current.length !== expectedCount ||
+        Math.abs(currentTotal - expectedTotal) > 0.01 ||
+        current.some(i => !i.month || !i.year || Number.isNaN(Number(i.amount)));
+
+      if (needsRepair) {
+        changed = true;
+        repaired.push(purchase.id);
+        state.data.installments = state.data.installments.filter(i => i.purchaseId !== purchase.id);
+        state.data.installments.push(...generateInstallments(purchase));
+      }
+    });
+
+    if (changed) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+      } catch (error) {}
+      console.warn('YR Finanças: parcelas reconstruídas a partir das compras para corrigir totais do dashboard.', repaired);
+    }
+
+    return changed;
+  }
+
+  function normalizeDashboardFilters() {
+    if (!state.data || !state.filters?.dashboard) return false;
+    let changed = false;
+    const f = state.filters.dashboard;
+
+    const month = Number(f.month);
+    if (!Number.isFinite(month) || month < 1 || month > 12) {
+      f.month = currentMonth;
+      changed = true;
+    }
+
+    const year = Number(f.year);
+    if (!Number.isFinite(year) || year < 2000) {
+      f.year = currentYear;
+      changed = true;
+    }
+
+    const cardId = f.cardId || 'all';
+    const validCards = new Set((state.data.cards || []).map(c => c.id));
+    const validMethods = new Set(['Dinheiro', 'Pix', 'Débito', 'Boleto']);
+
+    if (
+      cardId !== 'all' &&
+      !validCards.has(cardId) &&
+      !(String(cardId).startsWith('card:') && validCards.has(String(cardId).slice(5))) &&
+      !(String(cardId).startsWith('method:') && validMethods.has(String(cardId).slice(7)))
+    ) {
+      f.cardId = 'all';
+      changed = true;
+    }
+
+    return changed;
+  }
+
+  function prepareDataForDashboard() {
+    const repaired = repairInstallmentsFromPurchases();
+    const filterFixed = normalizeDashboardFilters();
+    return repaired || filterFixed;
+  }
+
+
 
   function savePurchase(payload, persist = true) {
     const total = money(payload.total);
@@ -542,8 +629,11 @@ function renderNav() {
   const peopleOptions = (includeEmpty = false, includeAll = false) => `${includeAll ? '<option value="all">Todas as pessoas</option>' : ''}${includeEmpty ? '<option value="">Nenhuma</option>' : ''}${state.data.people.map(p => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join('')}`;
 
   function renderDashboard() {
+    const dashboardDataFixed = prepareDataForDashboard();
+    if (dashboardDataFixed && state.user) scheduleCloudSync(false);
     fillMonthYear($('#dashboardMonth'), $('#dashboardYear'), state.filters.dashboard.month, state.filters.dashboard.year);
     $('#dashboardCard').innerHTML = cardOptions(false, true); $('#dashboardCard').value = state.filters.dashboard.cardId;
+    if ($('#dashboardCard').value !== String(state.filters.dashboard.cardId)) { state.filters.dashboard.cardId = 'all'; $('#dashboardCard').value = 'all'; }
     const t = calculateDashboardTotals();
     const metrics = [
       ['Total da fatura', t.totalInvoice, 'Soma de todas as parcelas no mês', 'rgba(99,102,241,.75)'], ['Meu gasto', t.mine, 'Parte que você deve pagar', 'rgba(34,197,94,.75)'],
@@ -1103,7 +1193,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=2512" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=2512fix1" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -1353,7 +1443,7 @@ function bindEvents() {
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=2512').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=2512fix1').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
