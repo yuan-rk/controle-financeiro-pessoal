@@ -125,3 +125,19 @@ Esta versão inclui manifest.json, sw.js e ícones para instalação na tela ini
 - Ao tocar na aba atual novamente, a página rola suavemente para o topo.
 - Ao trocar de página, a nova aba também abre no topo.
 - Mantém todas as melhorias da v25.11.
+
+
+## v25.12.1 mobile dashboard total fix
+- Baseada na v25.12 estável.
+- Corrige caso em que o celular mostra compras, mas o Dashboard fica com total da fatura zerado.
+- O Dashboard passa a reconstruir parcelas ausentes/corrompidas a partir das compras antes de calcular os totais.
+- Também corrige filtro de forma de pagamento antigo/inválido que pode ficar preso no celular por cache/localStorage.
+- Atualiza cache-busting para forçar o celular a carregar o JavaScript novo.
+
+
+## v25.12.2 fechamento de fatura
+- Baseada na v25.12.1.
+- Corrige a regra de cartão de crédito: compra feita depois do dia de fechamento entra na fatura do mês seguinte.
+- Exemplo: cartão fecha dia 3; compra em 10/06 entra na fatura de julho.
+- Repara automaticamente parcelas antigas que ficaram no mês errado com base nas compras existentes.
+- Não altera o visual do site.
