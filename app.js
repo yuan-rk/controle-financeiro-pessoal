@@ -1,4 +1,4 @@
-const YR_FINANCAS_VERSION = 'v25.17-dashboard-coluna-direita';
+const YR_FINANCAS_VERSION = 'v25.16-dashboard-mockup-fiel';
 /* YR Finanças - controle de faturas com sincronização opcional em nuvem.
    O sistema usa Supabase para login e banco online. O LocalStorage continua
    como cache/backup local para melhorar a experiência e facilitar migração. */
@@ -590,8 +590,8 @@ function renderDashboard() {
       { title: 'Formas ativas', value: t.activeCards, hint: 'Formas de pagamento disponíveis', icon: 'card', tone: 'violet', money: false }
     ];
     $('#dashboardMetrics').innerHTML = metrics.map(m => `
-      <div class="metric-card v2517-metric-card" data-tone="${m.tone}">
-        <span class="v2517-iconbox">${dashboardIcon(m.icon)}</span>
+      <div class="metric-card v2516-metric-card" data-tone="${m.tone}">
+        <span class="v2516-iconbox">${dashboardIcon(m.icon)}</span>
         <div>
           <span>${escapeHTML(m.title)}</span>
           <strong>${m.money ? formatCurrency(m.value) : m.value}</strong>
@@ -644,7 +644,7 @@ function renderDashboard() {
       const accounts = $('#overviewAccounts');
       if (accounts) {
         accounts.innerHTML = rows.map(([name, subtitle, amount, icon, percent], idx) => `
-          <div class="overview-row v2517-estimate-row" data-index="${idx}">
+          <div class="overview-row v2516-estimate-row" data-index="${idx}">
             <div class="overview-row-left">
               <span class="overview-icon">${dashboardIcon(icon)}</span>
               <div><strong>${escapeHTML(name)}</strong><span>${escapeHTML(subtitle)}</span></div>
@@ -671,14 +671,14 @@ function renderDashboard() {
           ['Limite livre total', 'De todos os cartões', totalLimit ? formatCurrency(availableLimit) : 'Sem limite', 'wallet']
         ];
         chips.innerHTML = `
-          <div class="v2517-quick-shell">
-            <div class="v2517-ring" style="--progress:${usage * 3.6}deg">
+          <div class="v2516-quick-shell">
+            <div class="v2516-ring" style="--progress:${usage * 3.6}deg">
               <div><span>Utilização<br>de limite</span><strong>${usage}%</strong><small>${formatCurrency(usedOnCards)} de<br>${formatCurrency(totalLimit || usedOnCards || 0)}</small></div>
             </div>
-            <div class="v2517-quick-grid">
+            <div class="v2516-quick-grid">
               ${quickCards.map(([label, desc, value, icon]) => `
-                <div class="v2517-quick-item">
-                  <span class="v2517-iconbox">${dashboardIcon(icon)}</span>
+                <div class="v2516-quick-item">
+                  <span class="v2516-iconbox">${dashboardIcon(icon)}</span>
                   <div><small>${escapeHTML(label)}</small><strong>${escapeHTML(value)}</strong><em>${escapeHTML(desc)}</em></div>
                 </div>`).join('')}
             </div>
@@ -689,19 +689,18 @@ function renderDashboard() {
       const cardsBox = $('#overviewCards');
       if (cardsBox) {
         const cards = Array.isArray(state.data.cards) ? state.data.cards : [];
-        cardsBox.classList.toggle('has-many-cards', cards.length > 3);
         if (!cards.length) {
           cardsBox.innerHTML = `<div class="empty-state compact-empty"><strong>Nenhum cartão cadastrado</strong><span>Cadastre seus cartões para acompanhar faturas.</span></div>`;
         } else {
-          cardsBox.innerHTML = cards.map(card => {
+          cardsBox.innerHTML = cards.slice(0, 4).map(card => {
             const invoice = (t?.installments || []).filter(i => i.cardId === card.id).reduce((s, i) => s + money(i.amount), 0);
             const limit = money(card.limit);
             const available = limit ? Math.max(0, limit - invoice) : 0;
             const pct = limit ? Math.min(100, Math.round((invoice / limit) * 100)) : 0;
             const img = cardArtSrc(card);
-            const visual = img ? `<img class="v2517-card-png" src="${img}" alt="${escapeHTML(card.nickname || card.name)}">` : `<div class="v2517-card-fallback" style="--card-a:${institutionPreset(card).color};--card-b:${institutionPreset(card).color2}">${institutionBadge(card,'lg')}</div>`;
+            const visual = img ? `<img class="v2516-card-png" src="${img}" alt="${escapeHTML(card.nickname || card.name)}">` : `<div class="v2516-card-fallback" style="--card-a:${institutionPreset(card).color};--card-b:${institutionPreset(card).color2}">${institutionBadge(card,'lg')}</div>`;
             return `
-              <div class="overview-card-item v2517-card-row">
+              <div class="overview-card-item v2516-card-row">
                 ${visual}
                 <div class="overview-card-info">
                   <strong>${escapeHTML(card.nickname || card.name)}</strong>
@@ -710,8 +709,8 @@ function renderDashboard() {
                     <small>Valor a pagar<br><b class="${invoice > 0 ? 'danger-text' : ''}">${formatCurrency(invoice)}</b></small>
                     <small>Limite disponível<br><b>${limit ? formatCurrency(available) : 'Sem limite'}</b></small>
                   </div>
-                  <div class="v2517-card-progress"><i style="width:${pct}%"></i></div>
-                  <div class="v2517-card-meta"><span>Utilizado: ${formatCurrency(invoice)}</span><span>Limite: ${limit ? formatCurrency(limit) : '—'}</span></div>
+                  <div class="v2516-card-progress"><i style="width:${pct}%"></i></div>
+                  <div class="v2516-card-meta"><span>Utilizado: ${formatCurrency(invoice)}</span><span>Limite: ${limit ? formatCurrency(limit) : '—'}</span></div>
                 </div>
                 <div class="overview-card-actions">
                   <span class="mini-due-pill">${card.closeDay ? `Fecha dia ${card.closeDay}` : 'Fatura manual'}</span>
@@ -1165,7 +1164,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=2517" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=2516" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -1415,7 +1414,7 @@ function bindEvents() {
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=2517').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=2516').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
@@ -1431,16 +1430,16 @@ if ('serviceWorker' in navigator) {
     const closeBtn = document.getElementById('closeMobileMenu');
     if(!drawer) return;
 
-    if(closeBtn && !closeBtn.dataset.v2517Bound){
-      closeBtn.dataset.v2517Bound = '1';
+    if(closeBtn && !closeBtn.dataset.v2516Bound){
+      closeBtn.dataset.v2516Bound = '1';
       closeBtn.addEventListener('click', function(){
         drawer.classList.remove('show');
         document.body.classList.remove('mobile-more-open');
       });
     }
 
-    if(!drawer.dataset.v2517Bound){
-      drawer.dataset.v2517Bound = '1';
+    if(!drawer.dataset.v2516Bound){
+      drawer.dataset.v2516Bound = '1';
       drawer.addEventListener('click', function(event){
         if(event.target === drawer){
           drawer.classList.remove('show');
