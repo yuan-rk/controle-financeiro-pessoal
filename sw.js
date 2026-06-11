@@ -1,16 +1,16 @@
-const CACHE_NAME = 'yr-financas-v25-12-1-mobile-dashboard-total-fix';
+const CACHE_NAME = 'yr-financas-v2512-scroll-to-top';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
-  './styles.css?v=2512fix1',
+  './styles.css?v=2512',
   './app.js',
-  './app.js?v=2512fix1',
+  './app.js?v=2512',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './icon-192.png?v=2512fix1',
-  './icon-512.png?v=2512fix1'
+  './icon-192.png?v=2512',
+  './icon-512.png?v=2512'
 ];
 
 self.addEventListener('install', event => {
