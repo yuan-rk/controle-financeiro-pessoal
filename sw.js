@@ -1,16 +1,19 @@
-const CACHE_NAME = 'yr-financas-v2514-dashboard-layout-real';
+const CACHE_NAME = 'yr-financas-v2517-dashboard-coluna-direita';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
-  './styles.css?v=2514',
+  './styles.css?v=2517',
   './app.js',
-  './app.js?v=2514',
+  './app.js?v=2517',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './icon-192.png?v=2514',
-  './icon-512.png?v=2514'
+  './assets/cards/nubank-card.png',
+  './assets/cards/picpay-card.png',
+  './assets/cards/inter-card.png',
+  './icon-192.png?v=2517',
+  './icon-512.png?v=2517'
 ];
 
 self.addEventListener('install', event => {

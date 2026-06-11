@@ -127,19 +127,16 @@ Esta versão inclui manifest.json, sw.js e ícones para instalação na tela ini
 - Mantém todas as melhorias da v25.11.
 
 
-## v25.13 dashboard PC redesign
-- Redesign real do Dashboard para PC/tablet largo.
-- Cards superiores com ícones em SVG inline.
-- Resumo rápido redesenhado com gráfico circular CSS e insights úteis.
-- Meus cartões redesenhado com cartões realistas em HTML/CSS.
-- Não usa placeholders de imagem.
-- Não altera banco, Supabase, compras, parcelas ou regras financeiras.
+## v25.16 dashboard fiel ao mockup
+- Baseada na v25.12 estável.
+- Reconstrói apenas o Dashboard no PC para seguir o mockup aprovado.
+- Adiciona PNGs reais locais para cartões visuais em `assets/cards/`.
+- Mantém Supabase, compras, parcelas, filtros e demais abas.
 
 
-## v25.14 dashboard PC layout real
-- Reorganiza estruturalmente o Dashboard no PC para ficar mais próximo do mockup aprovado.
-- Cards superiores ficam compactos em linha.
-- Visão geral, Resumo rápido e Meus cartões ficam em três colunas no PC.
-- Corrige cartões realistas cortados.
-- Corrige ícones da estimativa do mês, maiores e centralizados.
-- Mantém mobile/tablet estreito preservados.
+## v25.17 dashboard coluna direita
+- Une visualmente Resumo rápido e Meus cartões na coluna direita.
+- Visão geral financeira fica na coluna esquerda.
+- Área de cartões cresce automaticamente conforme novos cartões forem adicionados.
+- Imagens dos cartões foram regeradas em maior resolução.
+- Mantém a base v25.16 e as demais abas intactas.

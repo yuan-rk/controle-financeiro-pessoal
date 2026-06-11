@@ -1,4 +1,4 @@
-const YR_FINANCAS_VERSION = 'v25.15-dashboard-rebuild-real';
+const YR_FINANCAS_VERSION = 'v25.17-dashboard-coluna-direita';
 /* YR Finanças - controle de faturas com sincronização opcional em nuvem.
    O sistema usa Supabase para login e banco online. O LocalStorage continua
    como cache/backup local para melhorar a experiência e facilitar migração. */
@@ -544,16 +544,16 @@ function renderNav() {
   
   function dashboardIcon(name) {
     const icons = {
-      invoice: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-3-1.6-3 1.6-3-1.6-3 1.6-3-1.6V4a1 1 0 0 1 1-1Zm3 6h6M9 13h6M9 17h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-      user: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-      people: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8 1a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM3.5 20a5.5 5.5 0 0 1 11 0M14.5 18.5a4.5 4.5 0 0 1 6 1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-      received: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13 9 17 19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12a9 9 0 1 1-3-6.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-      pending: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v6l4 2M21 12a9 9 0 1 1-3-6.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-      cart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h2l2.3 9.2a2 2 0 0 0 2 1.5h6.8a2 2 0 0 0 1.9-1.4L21 8H7M10 20h.01M18 20h.01" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-      layers: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Zm-7 9 7 4 7-4M5 16l7 4 7-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-      card: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7Zm0 3h16M7 15h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-      trend: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 9 12l4 4 7-8M15 8h5v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-      calendar: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
+      invoice: '<svg viewBox="0 0 24 24"><path d="M5 4h14v16l-3-1.5-3 1.5-3-1.5L7 20l-2-1V4Zm4 5h6M9 13h6M9 17h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      wallet: '<svg viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H19v14H6.5A2.5 2.5 0 0 1 4 16.5v-9Zm12 4h4v4h-4a2 2 0 1 1 0-4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      people: '<svg viewBox="0 0 24 24"><path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8 1a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM3.5 20a5.5 5.5 0 0 1 11 0M14.5 18.5a4.5 4.5 0 0 1 6 1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+      check: '<svg viewBox="0 0 24 24"><path d="M9 12.5 11.5 15 16 9M21 12a9 9 0 1 1-3-6.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      clock: '<svg viewBox="0 0 24 24"><path d="M12 7v5l3 2M21 12a9 9 0 1 1-9-9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+      bag: '<svg viewBox="0 0 24 24"><path d="M7 8h10l1 12H6L7 8Zm3 0a2 2 0 0 1 4 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      calendar: '<svg viewBox="0 0 24 24"><path d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Zm3 8h2m3 0h2m-7 3h2m3 0h2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+      card: '<svg viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7Zm0 3h16M7 15h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+      trend: '<svg viewBox="0 0 24 24"><path d="M4 17 9 12l4 4 7-8M15 8h5v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      list: '<svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
     };
     return icons[name] || icons.trend;
   }
@@ -567,72 +567,38 @@ function renderNav() {
     return Object.entries(map).sort((a, b) => b[1] - a[1])[0] || ['Nenhum dado', 0];
   }
 
-  function cardLogoText(card = {}) {
-    const preset = institutionPreset(card);
-    const raw = `${card.name || ''} ${card.bank || ''} ${card.nickname || ''}`.toLowerCase();
-    if (raw.includes('nubank') || raw.includes('nu ')) return 'nu';
-    if (raw.includes('picpay')) return 'PicPay';
-    if (raw.includes('inter')) return raw.includes('black') ? 'inter' : 'inter';
-    if (raw.includes('mercado')) return 'mercado pago';
-    if (raw.includes('itau') || raw.includes('itaú')) return 'Itaú';
-    return preset.label || card.nickname || card.name || 'card';
-  }
-
-  function cardNetworkName(card = {}) {
-    const brand = String(card.brand || '').toLowerCase();
-    if (brand.includes('master')) return 'Mastercard';
-    if (brand.includes('visa')) return 'Visa';
-    if (brand.includes('elo')) return 'Elo';
-    if (brand.includes('american') || brand.includes('amex')) return 'Amex';
-    return card.brand || 'Card';
-  }
-
-  function realisticCardVisual(card = {}) {
-    const preset = institutionPreset(card);
-    const raw = `${card.name || ''} ${card.bank || ''} ${card.nickname || ''}`.toLowerCase();
-    const isBlack = raw.includes('black');
-    const color = isBlack ? '#111111' : (preset.color || card.color || '#6366F1');
-    const color2 = isBlack ? (preset.color || '#F97316') : (preset.color2 || '#06B6D4');
-    const network = cardNetworkName(card);
-    return `
-      <div class="yr15-real-card" style="--card-a:${color};--card-b:${color2};--card-text:${preset.textColor || '#fff'}">
-        <div class="yr15-real-card-shine"></div>
-        <div class="yr15-card-brand">${escapeHTML(cardLogoText(card))}</div>
-        <div class="yr15-card-chip"></div>
-        <div class="yr15-card-bottom"><span>${card.last4 ? '•••• ' + escapeHTML(card.last4) : '••••'}</span><b>${escapeHTML(network)}</b></div>
-      </div>`;
+  function cardArtSrc(card = {}) {
+    const key = institutionPreset(card).key;
+    if (key === 'nubank') return 'assets/cards/nubank-card.png';
+    if (key === 'picpay') return 'assets/cards/picpay-card.png';
+    if (key === 'inter') return 'assets/cards/inter-card.png';
+    return '';
   }
 
 function renderDashboard() {
     fillMonthYear($('#dashboardMonth'), $('#dashboardYear'), state.filters.dashboard.month, state.filters.dashboard.year);
     $('#dashboardCard').innerHTML = cardOptions(false, true); $('#dashboardCard').value = state.filters.dashboard.cardId;
     const t = calculateDashboardTotals();
-
     const metrics = [
-      { title: 'Total da fatura', value: t.totalInvoice, hint: 'Soma de todas as parcelas', icon: 'invoice', tone: 'primary', money: true },
-      { title: 'Meu gasto', value: t.mine, hint: 'Parte que você deve pagar', icon: 'card', tone: 'success', money: true },
-      { title: 'Terceiros devem', value: t.others, hint: 'Valor que outros devolvem', icon: 'people', tone: 'warning', money: true },
-      { title: 'Já recebido', value: t.received, hint: 'Pagamentos registrados', icon: 'received', tone: 'info', money: true },
-      { title: 'Pendente', value: t.pending, hint: 'Ainda em aberto', icon: 'pending', tone: 'danger', money: true },
-      { title: 'Compras', value: t.purchaseCount, hint: 'No mês filtrado', icon: 'cart', tone: 'warning', money: false },
-      { title: 'Parcelas', value: t.activeInstallments, hint: 'Na fatura filtrada', icon: 'layers', tone: 'info', money: false },
-      { title: 'Formas', value: t.activeCards, hint: 'Formas ativas', icon: 'card', tone: 'primary', money: false }
+      { title: 'Total da fatura', value: t.totalInvoice, hint: 'Soma de todas as parcelas no mês', icon: 'invoice', tone: 'purple', money: true },
+      { title: 'Meu gasto', value: t.mine, hint: 'Parte que você deve pagar', icon: 'wallet', tone: 'green', money: true },
+      { title: 'Terceiros devem', value: t.others, hint: 'Valor que outras pessoas precisam devolver', icon: 'people', tone: 'orange', money: true },
+      { title: 'Já recebido', value: t.received, hint: 'Pagamentos registrados', icon: 'check', tone: 'blue', money: true },
+      { title: 'Pendente a receber', value: t.pending, hint: 'Ainda em aberto', icon: 'clock', tone: 'red', money: true },
+      { title: 'Compras no mês', value: t.purchaseCount, hint: 'Compras com parcela neste mês', icon: 'bag', tone: 'amber', money: false },
+      { title: 'Parcelas ativas', value: t.activeInstallments, hint: 'Parcelas na fatura filtrada', icon: 'calendar', tone: 'cyan', money: false },
+      { title: 'Formas ativas', value: t.activeCards, hint: 'Formas de pagamento disponíveis', icon: 'card', tone: 'violet', money: false }
     ];
-
     $('#dashboardMetrics').innerHTML = metrics.map(m => `
-      <article class="yr15-metric" data-tone="${m.tone}">
-        <span class="yr15-metric-icon">${dashboardIcon(m.icon)}</span>
+      <div class="metric-card v2517-metric-card" data-tone="${m.tone}">
+        <span class="v2517-iconbox">${dashboardIcon(m.icon)}</span>
         <div>
           <span>${escapeHTML(m.title)}</span>
           <strong>${m.money ? formatCurrency(m.value) : m.value}</strong>
           <small>${escapeHTML(m.hint)}</small>
         </div>
-      </article>
-    `).join('');
-
-    renderFinancialOverview(t);
-    renderRankings(t.installments);
-    updateCharts(t);
+      </div>`).join('');
+    renderFinancialOverview(t); renderRankings(t.installments); updateCharts(t);
   }
 
 
@@ -654,33 +620,39 @@ function renderDashboard() {
       const myExpense = money(t?.mine || 0);
       const othersPending = money(t?.pending || 0);
       const balance = income - myExpense;
-      const cards = Array.isArray(state.data.cards) ? state.data.cards : [];
-      const totalLimit = cards.reduce((sum, card) => sum + money(card.limit), 0);
-      const availableLimit = totalLimit ? Math.max(0, totalLimit - expense) : 0;
-      const limitUsage = totalLimit ? Math.min(100, Math.round((expense / totalLimit) * 100)) : 0;
+      const totalLimit = (state.data.cards || []).reduce((sum, card) => sum + money(card.limit), 0);
+      const usedOnCards = expense;
+      const availableLimit = totalLimit ? Math.max(0, totalLimit - usedOnCards) : 0;
+      const usage = totalLimit ? Math.min(100, Math.round((usedOnCards / totalLimit) * 100)) : 0;
 
       const totals = $('#overviewTotals');
       if (totals) {
         totals.innerHTML = `
           <div><span>Receita mensal</span><strong class="positive">${formatCurrency(income)}</strong><small>Entradas no mês</small></div>
-          <div><span>Despesa mensal</span><strong class="danger-text">${formatCurrency(myExpense)}</strong><small>Sua parte nas faturas</small></div>
+          <div><span>Despesa mensal</span><strong class="danger-text">${formatCurrency(myExpense)}</strong><small>Saídas no mês</small></div>
           <div><span>Saldo geral</span><strong class="${balance < 0 ? 'danger-text' : ''}">${formatCurrency(balance)}</strong><small>Saldo estimado</small></div>
         `;
       }
 
-      const estimateRows = [
-        ['Receita estimada', 'Entradas registradas no mês', income, 'received', income ? Math.round((income / Math.max(income, myExpense || 1)) * 100) : 0],
-        ['Gastos estimados', 'Sua parte + faturas do mês', myExpense, 'invoice', myExpense ? 100 : 0],
-        ['Saldo após pagar tudo', 'Receita menos seus gastos', balance, 'trend', income ? Math.round((balance / income) * 100) : (balance < 0 ? -100 : 0)],
-        ['Fatura do mês', 'Total em cartões e compras', -expense, 'card', totalLimit ? Math.round((expense / totalLimit) * 100) : 0]
+      const rows = [
+        ['Receita estimada', 'Entradas registradas', income, 'received', income ? Math.round((income / Math.max(income, myExpense || 1)) * 100) : 0],
+        ['Gastos estimados', 'Sua parte + faturas', myExpense, 'invoice', myExpense ? 100 : 0],
+        ['Saldo após pagar tudo', 'Receita menos seus gastos', balance, 'card', income ? Math.round((balance / income) * 100) : (balance < 0 ? -100 : 0)],
+        ['Fatura do mês', 'Total em cartões e compras', -expense, 'card', totalLimit ? -Math.round((expense / totalLimit) * 100) : (expense ? -100 : 0)]
       ];
 
       const accounts = $('#overviewAccounts');
       if (accounts) {
-        accounts.innerHTML = estimateRows.map(([name, subtitle, amount, icon, percent]) => `
-          <div class="yr15-estimate-row">
-            <div class="yr15-estimate-left"><span>${dashboardIcon(icon)}</span><div><strong>${escapeHTML(name)}</strong><small>${escapeHTML(subtitle)}</small></div></div>
-            <div class="yr15-estimate-value ${amount < 0 ? 'danger-text' : ''}"><strong>${formatCurrency(amount)}</strong><small>${Number.isFinite(percent) ? percent : 0}%</small></div>
+        accounts.innerHTML = rows.map(([name, subtitle, amount, icon, percent], idx) => `
+          <div class="overview-row v2517-estimate-row" data-index="${idx}">
+            <div class="overview-row-left">
+              <span class="overview-icon">${dashboardIcon(icon)}</span>
+              <div><strong>${escapeHTML(name)}</strong><span>${escapeHTML(subtitle)}</span></div>
+            </div>
+            <div class="overview-row-value ${amount < 0 ? 'danger-text' : ''}">
+              <strong>${formatCurrency(amount)}</strong>
+              <small>${Number.isFinite(percent) ? percent + '%' : '0%'}</small>
+            </div>
           </div>
         `).join('');
       }
@@ -690,58 +662,67 @@ function renderDashboard() {
         .filter(i => i.year > currentYear || (i.year === currentYear && i.month >= currentMonth))
         .sort((a, b) => a.year - b.year || a.month - b.month || money(b.amount) - money(a.amount))[0];
 
-      const quickCards = [
-        ['Próximo vencimento', nextInstallment ? `${cardName(nextInstallment.cardId)} • ${monthName(nextInstallment.month)}` : 'Nenhum vencimento futuro', nextInstallment ? formatCurrency(nextInstallment.amount) : 'R$ 0,00', 'calendar'],
-        ['Maior gasto do mês', topCategory[0], formatCurrency(topCategory[1]), 'trend'],
-        ['Recebimentos pendentes', othersPending ? 'Pendente de terceiros' : 'Tudo certo', formatCurrency(othersPending), 'people'],
-        ['Limite livre total', 'Somando formas com limite', totalLimit ? formatCurrency(availableLimit) : 'Sem limite cadastrado', 'card']
-      ];
-
       const chips = $('#overviewAccountChips');
       if (chips) {
+        const quickCards = [
+          ['Próximo vencimento', nextInstallment ? `${nextInstallment.description} • ${monthName(nextInstallment.month)}` : 'Nada futuro', nextInstallment ? formatCurrency(nextInstallment.amount) : 'R$ 0,00', 'calendar'],
+          ['Maior gasto do mês', topCategory[0], formatCurrency(topCategory[1]), 'trend'],
+          ['Recebimentos pendentes', othersPending ? '1 pendência em aberto' : 'Nada pendente', formatCurrency(othersPending), 'people'],
+          ['Limite livre total', 'De todos os cartões', totalLimit ? formatCurrency(availableLimit) : 'Sem limite', 'wallet']
+        ];
         chips.innerHTML = `
-          <div class="yr15-quick-ring" style="--progress:${limitUsage * 3.6}deg">
-            <div><span>Utilização<br>de limite</span><strong>${limitUsage}%</strong><small>${formatCurrency(expense)} de ${formatCurrency(totalLimit || expense || 0)}</small></div>
-          </div>
-          <div class="yr15-quick-cards">
-            ${quickCards.map(([label, desc, value, icon]) => `
-              <div class="yr15-quick-mini">
-                <span>${dashboardIcon(icon)}</span>
-                <div><small>${escapeHTML(label)}</small><strong>${escapeHTML(value)}</strong><em>${escapeHTML(desc)}</em></div>
-              </div>
-            `).join('')}
+          <div class="v2517-quick-shell">
+            <div class="v2517-ring" style="--progress:${usage * 3.6}deg">
+              <div><span>Utilização<br>de limite</span><strong>${usage}%</strong><small>${formatCurrency(usedOnCards)} de<br>${formatCurrency(totalLimit || usedOnCards || 0)}</small></div>
+            </div>
+            <div class="v2517-quick-grid">
+              ${quickCards.map(([label, desc, value, icon]) => `
+                <div class="v2517-quick-item">
+                  <span class="v2517-iconbox">${dashboardIcon(icon)}</span>
+                  <div><small>${escapeHTML(label)}</small><strong>${escapeHTML(value)}</strong><em>${escapeHTML(desc)}</em></div>
+                </div>`).join('')}
+            </div>
           </div>
         `;
       }
 
       const cardsBox = $('#overviewCards');
       if (cardsBox) {
+        const cards = Array.isArray(state.data.cards) ? state.data.cards : [];
+        cardsBox.classList.toggle('has-many-cards', cards.length > 3);
         if (!cards.length) {
-          cardsBox.innerHTML = `<div class="empty-state compact-empty"><strong>Nenhum cartão cadastrado</strong><span>Cadastre seus cartões para acompanhar as faturas.</span></div>`;
+          cardsBox.innerHTML = `<div class="empty-state compact-empty"><strong>Nenhum cartão cadastrado</strong><span>Cadastre seus cartões para acompanhar faturas.</span></div>`;
         } else {
-          cardsBox.innerHTML = cards.slice(0, 4).map(card => {
+          cardsBox.innerHTML = cards.map(card => {
             const invoice = (t?.installments || []).filter(i => i.cardId === card.id).reduce((s, i) => s + money(i.amount), 0);
             const limit = money(card.limit);
             const available = limit ? Math.max(0, limit - invoice) : 0;
-            const usage = limit ? Math.min(100, Math.round((invoice / limit) * 100)) : 0;
-            const closeText = card.closeDay ? `Fecha dia ${card.closeDay}` : 'Fatura manual';
+            const pct = limit ? Math.min(100, Math.round((invoice / limit) * 100)) : 0;
+            const img = cardArtSrc(card);
+            const visual = img ? `<img class="v2517-card-png" src="${img}" alt="${escapeHTML(card.nickname || card.name)}">` : `<div class="v2517-card-fallback" style="--card-a:${institutionPreset(card).color};--card-b:${institutionPreset(card).color2}">${institutionBadge(card,'lg')}</div>`;
             return `
-              <article class="yr15-card-row">
-                ${realisticCardVisual(card)}
-                <div class="yr15-card-info">
+              <div class="overview-card-item v2517-card-row">
+                ${visual}
+                <div class="overview-card-info">
                   <strong>${escapeHTML(card.nickname || card.name)}</strong>
-                  <span>${escapeHTML(card.bank || card.type || 'Cartão')}</span>
-                  <div class="yr15-card-values"><small>Valor a pagar<br><b>${formatCurrency(invoice)}</b></small><small>Limite disponível<br><b>${limit ? formatCurrency(available) : 'Sem limite'}</b></small></div>
-                  <div class="yr15-progress" style="--usage:${usage}%"><i></i></div>
-                  <div class="yr15-card-foot"><span>Utilizado: ${formatCurrency(invoice)}</span><span>Limite: ${limit ? formatCurrency(limit) : '—'}</span></div>
+                  <span>${escapeHTML(card.type || 'Crédito')}</span>
+                  <div class="overview-card-metrics">
+                    <small>Valor a pagar<br><b class="${invoice > 0 ? 'danger-text' : ''}">${formatCurrency(invoice)}</b></small>
+                    <small>Limite disponível<br><b>${limit ? formatCurrency(available) : 'Sem limite'}</b></small>
+                  </div>
+                  <div class="v2517-card-progress"><i style="width:${pct}%"></i></div>
+                  <div class="v2517-card-meta"><span>Utilizado: ${formatCurrency(invoice)}</span><span>Limite: ${limit ? formatCurrency(limit) : '—'}</span></div>
                 </div>
-                <div class="yr15-card-actions"><span>${escapeHTML(closeText)}</span><button class="secondary-button tiny-button" type="button" onclick="FinCard.showCardInvoice('${card.id}')">Ver fatura</button></div>
-              </article>`;
+                <div class="overview-card-actions">
+                  <span class="mini-due-pill">${card.closeDay ? `Fecha dia ${card.closeDay}` : 'Fatura manual'}</span>
+                  <button class="secondary-button tiny-button" type="button" onclick="FinCard.showCardInvoice('${card.id}')">Ver fatura</button>
+                </div>
+              </div>`;
           }).join('');
         }
       }
     } catch (error) {
-      console.error('Erro ao renderizar dashboard redesenhado:', error);
+      console.error('Erro ao renderizar visão geral financeira:', error);
     }
   }
 
@@ -757,6 +738,7 @@ function renderDashboard() {
 
   function chart(id, type, labels, data, label) {
     const ctx = document.getElementById(id);
+    if (!ctx) return;
     if (state.charts[id]) state.charts[id].destroy();
     const textColor = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim();
     state.charts[id] = new Chart(ctx, { type, data: { labels, datasets: [{ label, data, borderWidth: 2, tension: .35, fill: type === 'line', backgroundColor: ['#6366F1','#06B6D4','#22C55E','#F59E0B','#EF4444','#8B5CF6','#14B8A6','#F97316'], borderColor: '#6366F1' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor } } }, scales: type === 'doughnut' || type === 'pie' ? {} : { x: { ticks: { color: textColor }, grid: { color: 'rgba(148,163,184,.12)' } }, y: { ticks: { color: textColor }, grid: { color: 'rgba(148,163,184,.12)' } } } } });
@@ -1183,7 +1165,7 @@ Analise este relatório financeiro e monte um plano econômico para mim. Quero s
     gate.className = 'auth-gate';
     gate.innerHTML = `
       <div class="auth-card">
-        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=2515" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
+        <div class="brand auth-brand"><div class="brand-logo"><img src="icon-192.png?v=2517" alt="Logo YR Finanças"></div><div><strong>YR Finanças</strong><span>sincronização em nuvem</span></div></div>
         <div class="auth-copy">
           <span class="auth-kicker">Conta segura</span>
           <h1>Entre para sincronizar seus dados</h1>
@@ -1433,7 +1415,7 @@ function bindEvents() {
 // Registro do Service Worker para PWA.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=2515').catch((error) => {
+    navigator.serviceWorker.register('./sw.js?v=2517').catch((error) => {
       console.warn('Service Worker não registrado:', error);
     });
   });
@@ -1449,16 +1431,16 @@ if ('serviceWorker' in navigator) {
     const closeBtn = document.getElementById('closeMobileMenu');
     if(!drawer) return;
 
-    if(closeBtn && !closeBtn.dataset.v2515Bound){
-      closeBtn.dataset.v2515Bound = '1';
+    if(closeBtn && !closeBtn.dataset.v2517Bound){
+      closeBtn.dataset.v2517Bound = '1';
       closeBtn.addEventListener('click', function(){
         drawer.classList.remove('show');
         document.body.classList.remove('mobile-more-open');
       });
     }
 
-    if(!drawer.dataset.v2515Bound){
-      drawer.dataset.v2515Bound = '1';
+    if(!drawer.dataset.v2517Bound){
+      drawer.dataset.v2517Bound = '1';
       drawer.addEventListener('click', function(event){
         if(event.target === drawer){
           drawer.classList.remove('show');
